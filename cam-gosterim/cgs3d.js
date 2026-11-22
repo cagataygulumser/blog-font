@@ -17,12 +17,19 @@
   /* ---------- optik ---------- */
   function ctMin(n) { return n >= 1.67 ? 1.2 : n >= 1.59 ? 1.5 : n >= 1.56 ? 1.6 : 2.0; }
   function ssag(F, n, r) { if (Math.abs(F) < 0.01) return 0; var R = (n - 1) * 1000 / Math.abs(F), q = Math.min(r, R * 0.97), s = R - Math.sqrt(R * R - q * q); return F > 0 ? s : -s; }
-  function contour(shape, A, phi, side) {
-    var a = A / 2, c = Math.cos(phi), s = Math.sin(phi), x, y, e;
+  var BR = { dikdortgen: 0.7, oval: 0.8, yuvarlak: 1, pilot: 0.88, klasik: 0.82, kedi: 0.74 }, UC = {};
+  function uraw(shape, ns, t) { var n = shape === 'kedi' ? 2.5 : 2.6, cs = Math.cos(t), sn = Math.sin(t), u = (cs < 0 ? -1 : 1) * Math.pow(Math.abs(cs), 2 / n), v = (sn < 0 ? -1 : 1) * Math.pow(Math.abs(sn), 2 / n), nz = u * ns;
+    if (shape === 'kedi') { var tz = Math.max(0, -nz); if (v > 0) { v *= 1 + 0.75 * tz * tz; u *= 1 + 0.1 * v * tz; } else u *= 1 - 0.16 * (-v); } return [u, v]; }
+  function unit(shape, side, phi) { var k = shape + side, c = UC[k], i, q; if (!c) { c = [1e9, -1e9, 1e9, -1e9]; for (i = 0; i < 360; i++) { q = uraw(shape, -side, i / 360 * Math.PI * 2); c[0] = Math.min(c[0], q[0]); c[1] = Math.max(c[1], q[0]); c[2] = Math.min(c[2], q[1]); c[3] = Math.max(c[3], q[1]); } UC[k] = c; }
+    q = uraw(shape, -side, phi); return [(q[0] - c[0]) / (c[1] - c[0]) - 0.5, (q[1] - c[2]) / (c[3] - c[2]) - 0.5]; }
+  function contour(shape, A, phi, side, B) {
+    var a = A / 2, c = Math.cos(phi), s = Math.sin(phi), x, y, e, q;
+    if (shape === 'klasik' || shape === 'kedi') { q = unit(shape, side, phi); return [q[0] * A, q[1] * (B || BR[shape] * A)]; }
     if (shape === 'yuvarlak') { x = a * c; y = a * s; }
     else if (shape === 'oval') { x = a * c; y = a * 0.8 * s; }
     else if (shape === 'pilot') { x = a * c; y = a * (s < 0 ? 0.98 : 0.78) * s; if (s < 0) x += side * a * 0.10 * (-s); x *= (1 - 0.10 * Math.max(0, -s) * (side * c < 0 ? 1 : 0)); }
     else { e = 2 / 4.2; x = a * (c < 0 ? -1 : 1) * Math.pow(Math.abs(c), e); y = a * 0.7 * (s < 0 ? -1 : 1) * Math.pow(Math.abs(s), e); if (y < 0 && side * x < 0) x += side * 0.2 * (-y) * Math.abs(x) / a; }
+    if (B && BR[shape]) y *= B / (BR[shape] * A);
     return [x, y];
   }
   function buildLens(rx, P, side) {
@@ -32,10 +39,12 @@
     function fsag(x, y) { var r = Math.min(Math.sqrt(x * x + y * y), Rb * 0.95); return Rb - Math.sqrt(Rb * Rb - r * r); }
     function sg(x, y) { var dx = x - ocx, dy = y - ocy, r = Math.sqrt(dx * dx + dy * dy), th = Math.atan2(dy, dx), F = S + C * Math.pow(Math.sin(th - ax), 2); return ssag(F, n, r); }
     var pts = [], i, j, k, maxS = -1e9;
-    for (i = 0; i <= NR; i++) { pts.push([]); for (j = 0; j < NS; j++) { var t = i / NR, p = rx.contour ? rx.contour(j / NS * Math.PI * 2) : contour(P.shape, P.A, j / NS * Math.PI * 2, side), x = p[0] * t, y = p[1] * t, s = cust ? 0 : sg(x, y); if (s > maxS) maxS = s; pts[i].push([x, y, s]); } }
+    for (i = 0; i <= NR; i++) { pts.push([]); for (j = 0; j < NS; j++) { var t = i / NR, p = rx.contour ? rx.contour(j / NS * Math.PI * 2) : contour(P.shape, P.A, j / NS * Math.PI * 2, side, P.B), x = p[0] * t, y = p[1] * t, s = cust ? 0 : sg(x, y); if (s > maxS) maxS = s; pts[i].push([x, y, s]); } }
     var t0 = Math.max(ctMin(n), 1.0 + maxS);
-    var fp = [], bp = [], idx = [];
-    for (i = 0; i <= NR; i++) for (j = 0; j < NS; j++) { var q = pts[i][j], zf = -fsag(q[0], q[1]), th2 = cust ? Math.max(0.3, rx.thk(q[0], q[1])) : t0 - q[2]; q[3] = zf; q[4] = th2; fp.push(q[0], q[1], zf); bp.push(q[0], q[1], zf - th2); }
+    var fp = [], bp = [], idx = [], E0 = [], RJ = [], maxE0 = -1, fac = false;
+    for (j = 0; j < NS; j++) { var o0 = pts[NR][j], e0 = cust ? Math.max(0.3, rx.thk(o0[0], o0[1])) : t0 - o0[2]; E0.push(e0); RJ.push(Math.sqrt(o0[0] * o0[0] + o0[1] * o0[1])); if (e0 > maxE0) maxE0 = e0; }
+    for (i = 0; i <= NR; i++) for (j = 0; j < NS; j++) { var q = pts[i][j], zf = -fsag(q[0], q[1]), th2 = cust ? Math.max(0.3, rx.thk(q[0], q[1])) : t0 - q[2];
+      if (P.facet) { var fd = Math.min(0.42 * E0[j], E0[j] - 2.2); if (fd > 0.2) { var dd = (1 - i / NR) * RJ[j], fw = Math.max(2.6, fd * 1.25); if (dd < fw) { th2 -= fd * (1 - dd / fw); fac = true; } } } q[3] = zf; q[4] = th2; fp.push(q[0], q[1], zf); bp.push(q[0], q[1], zf - th2); }
     for (i = 0; i < NR; i++) for (j = 0; j < NS; j++) { var a = i * NS + j, b = i * NS + (j + 1) % NS, c = (i + 1) * NS + j, d = (i + 1) * NS + (j + 1) % NS; idx.push(a, c, b, b, c, d); }
     var gf = new THREE.BufferGeometry(); gf.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); gf.setIndex(idx); gf.computeVertexNormals();
     var gb = new THREE.BufferGeometry(); gb.setAttribute('position', new THREE.Float32BufferAttribute(bp, 3)); gb.setIndex(idx.slice().reverse()); gb.computeVertexNormals();
@@ -46,7 +55,7 @@
     for (i = 0; i < NR; i++) for (j = 0; j < NS; j++) { var A0 = pts[i][j], B0 = pts[i][(j + 1) % NS], C0 = pts[i + 1][j], D0 = pts[i + 1][(j + 1) % NS];
       var ar = Math.abs((C0[0] - A0[0]) * (B0[1] - A0[1]) - (B0[0] - A0[0]) * (C0[1] - A0[1])) / 2 + Math.abs((C0[0] - D0[0]) * (B0[1] - D0[1]) - (B0[0] - D0[0]) * (C0[1] - D0[1])) / 2;
       vol += ar * (A0[4] + B0[4] + C0[4] + D0[4]) / 4; }
-    return { gf: gf, gb: gb, ge: ge, rim: rim, back: back, stats: { maxE: maxE, minE: minE, ct: cust ? rx.thk(ocx, ocy) : t0 - sg(ocx, ocy), g: rx.g != null ? rx.g : vol / 1000 * (DENS[String(n)] || 1.3), maxP: maxP, n: n, oc: [ocx, ocy], label: rx.label } };
+    return { gf: gf, gb: gb, ge: ge, rim: rim, back: back, stats: { maxE: maxE, minE: minE, ct: cust ? rx.thk(ocx, ocy) : t0 - sg(ocx, ocy), g: rx.g != null ? rx.g : vol / 1000 * (DENS[String(n)] || 1.3), maxP: maxP, n: n, oc: [ocx, ocy], label: fac ? null : rx.label, maxE0: maxE0, fac: fac } };
   }
   function label(text, color) {
     var c = document.createElement('canvas'); c.width = 256; c.height = 96; var g = c.getContext('2d'); g.font = '700 44px Arial'; var w = Math.min(248, g.measureText(text).width + 44);
@@ -139,6 +148,7 @@
     window.addEventListener('resize', resize); st.ready = true; resize(); rebuild(); view(st.viewName || 'capraz', true);
   }
   window.CGS3D = {
+    BR: BR,
     mount: function (el, base, cb) {
       st.el = el; if (st.ready) { cb && cb(null); return; } if (cb) st.cbs.push(cb); if (st.loading) return; st.loading = true;
       function done(err) { st.loading = false; var a = st.cbs; st.cbs = []; a.forEach(function (f) { f(err); }); }

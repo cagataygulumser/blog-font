@@ -39,7 +39,7 @@
     if (ref) ref.addEventListener('click', function () { if (on) leave(); }, true);
   })();
   var stage = root.querySelector('.pdsim-stage'), svg = stage && stage.querySelector('svg'); if (!svg) return;
-  var on = false, ready = false, loading = false, head = true, vname = 'capraz', tmr = 0;
+  var on = false, ready = false, loading = false, head = true, vname = 'capraz', tmr = 0, ftype = 'metal', fcol = 'siyah';
   function el(t, c, h) { var e = document.createElement(t); e.className = c; if (h) e.innerHTML = h; return e; }
   function fmt(v) { return v.toFixed(1).replace('.', ',') + ' mm'; }
 
@@ -54,21 +54,25 @@
     '.pd3-bar{position:absolute;left:6px;right:6px;bottom:8px;z-index:2;display:flex;gap:4px;justify-content:center;flex-wrap:wrap}' +
     '.pd3-bar button{background:rgba(255,255,255,.86);border:1px solid #d3dbe8;padding:6px 10px;font-size:11.5px}' +
     '.pd3-bar button.on{background:#14233b;border-color:#14233b;color:#fff}' +
-    '.pd3-hint{position:absolute;right:10px;top:12px;z-index:2;font-weight:600;font-size:11px;line-height:1.3;color:#5a6780;max-width:46%;text-align:right;pointer-events:none}' +
+    '.pd3-fr{position:absolute;right:8px;top:8px;z-index:2;display:flex;flex-direction:column;align-items:flex-end;gap:6px}' +
+    '.pd3-fr .pd3-ft{border:1px solid #d3dbe8;background:rgba(255,255,255,.9);border-radius:999px;padding:6px 10px;font-weight:700;font-size:11.5px;line-height:1;font-family:inherit;color:#14233b;cursor:pointer}' +
+    '.pd3-fr .pd3-dots{display:flex;flex-direction:column;gap:5px;padding:5px;border-radius:999px;background:rgba(255,255,255,.9);border:1px solid #d3dbe8}' +
+    '.pd3-fr .pd3-dots button{width:20px;height:20px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #c5cedc;padding:0;cursor:pointer}' +
+    '.pd3-fr .pd3-dots button.on{box-shadow:0 0 0 2px #0f3fa6}' +
     '@media (pointer:coarse){.pd3-sw button{padding:10px 14px}.pd3-bar{gap:3px;flex-wrap:nowrap}.pd3-bar button{padding:10px 9px;font-size:12px;white-space:nowrap}}' +
-    '@media (max-width:600px){.pd3-hint{display:none}}' +
+    '@media (pointer:coarse){.pd3-fr .pd3-ft{padding:9px 11px}.pd3-fr .pd3-dots button{width:24px;height:24px}}' +
     '@media print{.pd3-sw,.pd3-box{display:none!important}}';
   document.head.appendChild(css);
 
   var sw = el('div', 'pd3-sw', '<button type="button" data-m="2" class="on">Çizim</button><button type="button" data-m="3">3B</button>');
-  var box = el('div', 'pd3-box', '<div class="pd3-cv"></div><div class="pd3-msg">3B model yükleniyor…</div><div class="pd3-hint">Döndürmek için sürükleyin</div>' +
+  var box = el('div', 'pd3-box', '<div class="pd3-cv"></div><div class="pd3-msg">3B model yükleniyor…</div><div class="pd3-fr"><button type="button" class="pd3-ft" title="Çerçeve türünü değiştir">İnce metal</button><div class="pd3-dots" role="group" aria-label="Çerçeve rengi">' + [['siyah', 'Siyah', '#16181d'], ['altin', 'Altın', '#c9a24a'], ['gumus', 'Gümüş', '#b8c0c9'], ['kahve', 'Kahve', '#6b4428'], ['lacivert', 'Lacivert', '#1d3a6e']].map(function (c, i) { return '<button type="button" data-c="' + c[0] + '" title="' + c[1] + '" aria-label="' + c[1] + '" style="background:' + c[2] + '"' + (i ? '' : ' class="on"') + '></button>'; }).join('') + '</div></div>' +
     '<div class="pd3-bar"><button type="button" data-v="capraz" class="on">Çapraz</button><button type="button" data-v="on">Önden</button><button type="button" data-v="yan">Yandan</button><button type="button" data-v="ust">Üstten</button><button type="button" data-h="1" class="on">Baş</button></div>');
   box.hidden = true; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'Görünüm');
   stage.appendChild(box); stage.appendChild(sw);
   var cv = box.querySelector('.pd3-cv'), msg = box.querySelector('.pd3-msg');
 
   function params() {
-    var S = D.S, P = { A: S.A, dbl: S.DBL, pd: S.R.pd + S.L.pd, shape: 'ozel', frame: 'metal', color: 'siyah', head: head, auto: false, zoom: 0.74 };
+    var S = D.S, P = { A: S.A, dbl: S.DBL, pd: S.R.pd + S.L.pd, shape: 'ozel', frame: ftype, color: fcol, head: head, auto: false, zoom: 0.74 };
     [['r', 'R'], ['l', 'L']].forEach(function (a) {
       var e = a[1], o = S[e], oc = D.oc(e), T = D.thick(e, oc), b = D.boxC(e), n, loc = D.rimPts(e).map(function (q) { return [q.x - b.x, q.y - b.y]; }); n = loc.length;
       P[a[0]] = { s: o.sph, c: o.cyl, a: o.ax, n: S.idx, oc: [oc.x - b.x, oc.y - b.y], g: T.w, label: fmt(Math.max(T.tc, T.max)),
@@ -95,6 +99,12 @@
     var b = ev.target.closest('button'); if (!b) return;
     if (b.hasAttribute('data-h')) { head = !head; b.classList.toggle('on', head); push(); return; }
     vname = b.getAttribute('data-v'); [].forEach.call(box.querySelectorAll('[data-v]'), function (x) { x.classList.toggle('on', x === b); }); if (ready) window.CGS3D.view(vname);
+  });
+  box.querySelector('.pd3-fr').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b) return;
+    if (b.className.indexOf('pd3-ft') >= 0) { ftype = ftype === 'metal' ? 'asetat' : 'metal'; b.textContent = ftype === 'metal' ? 'İnce metal' : 'Asetat'; }
+    else { fcol = b.getAttribute('data-c'); [].forEach.call(box.querySelectorAll('.pd3-dots button'), function (x) { x.classList.toggle('on', x === b); }); }
+    push();
   });
   if (window.MutationObserver) new MutationObserver(later).observe(svg, { attributes: true, childList: true, subtree: true });
   if (window.ResizeObserver) new ResizeObserver(function () { if (on && ready) window.CGS3D.resize(); }).observe(stage);
