@@ -55,8 +55,8 @@
     '.pd3-bar button{background:rgba(255,255,255,.86);border:1px solid #d3dbe8;padding:6px 10px;font-size:11.5px}' +
     '.pd3-bar button.on{background:#14233b;border-color:#14233b;color:#fff}' +
     '.pd3-hint{position:absolute;right:10px;top:12px;z-index:2;font-weight:600;font-size:11px;line-height:1.3;color:#5a6780;max-width:46%;text-align:right;pointer-events:none}' +
-    '@media (pointer:coarse){.pd3-sw button{padding:10px 14px}.pd3-bar button{padding:10px 12px;font-size:12.5px}}' +
-    '@media (max-width:600px){.pd3-hint{display:none}.pd3-bar{gap:3px}}' +
+    '@media (pointer:coarse){.pd3-sw button{padding:10px 14px}.pd3-bar{gap:3px;flex-wrap:nowrap}.pd3-bar button{padding:10px 9px;font-size:12px;white-space:nowrap}}' +
+    '@media (max-width:600px){.pd3-hint{display:none}}' +
     '@media print{.pd3-sw,.pd3-box{display:none!important}}';
   document.head.appendChild(css);
 
