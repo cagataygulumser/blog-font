@@ -75,7 +75,7 @@
     st.ring.position.copy(hit); st.ring.quaternion.setFromUnitVectors(V(0, 0, 1), dir); st.dot.position.copy(hit); st.ring.visible = st.dot.visible = ins;
     return { u: u, v: v, inside: ins, blur: ins ? P.map(u, v) : 0 };
   }
-  function resize() { if (!st.ready) return; var w = st.el.clientWidth || 2, h = st.el.clientHeight || 2; st.r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); st.r.setSize(w, h, false); st.cam.aspect = w / h; st.cam.fov = w / h < 1.2 ? 40 : 28; st.cam.updateProjectionMatrix();
+  function resize() { if (!st.ready) return; var w = st.el.clientWidth || 2, h = st.el.clientHeight || 2; st.r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); st.r.setSize(w, h, false); st.cam.aspect = w / h; st.cam.fov = w / h < 1.2 ? 40 : 28; st.cam.zoom = h < 300 ? 0.7 : 1; st.cam.setViewOffset && (h < 300 ? st.cam.setViewOffset(w, h, 0, -h * 0.12, w, h) : st.cam.clearViewOffset()); st.cam.updateProjectionMatrix();
     var lk = Math.max(1, Math.min(1.8, 430 / h)); st.labels.children.forEach(function (sp) { sp.scale.set(0.11 * lk, 0.033 * lk, 1); }); }
   function loop() { st.raf = 0; if (!st.vis) return; st.ctl.update(); st.r.render(st.sc, st.cam); st.raf = requestAnimationFrame(loop); }
   window.CGS3E = {
