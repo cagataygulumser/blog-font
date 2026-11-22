@@ -26,16 +26,16 @@
     return [x, y];
   }
   function buildLens(rx, P, side) {
-    var NR = 22, NS = 96, n = rx.n, S = rx.s, C = rx.c, ax = rx.a * Math.PI / 180;
-    var dec = (P.A + P.dbl - P.pd) / 2, ocx = -side * dec, ocy = 2;
+    var NR = 22, NS = 96, n = rx.n, S = rx.s, C = rx.c, ax = rx.a * Math.PI / 180, cust = typeof rx.thk === 'function';
+    var dec = (P.A + P.dbl - P.pd) / 2, ocx = rx.oc ? rx.oc[0] : -side * dec, ocy = rx.oc ? rx.oc[1] : 2;
     var se = S + C / 2, base = se >= 0 ? cl(se + 4, 4, 10) : cl(se / 2 + 5, 0.5, 5), Rb = 530 / base;
     function fsag(x, y) { var r = Math.min(Math.sqrt(x * x + y * y), Rb * 0.95); return Rb - Math.sqrt(Rb * Rb - r * r); }
     function sg(x, y) { var dx = x - ocx, dy = y - ocy, r = Math.sqrt(dx * dx + dy * dy), th = Math.atan2(dy, dx), F = S + C * Math.pow(Math.sin(th - ax), 2); return ssag(F, n, r); }
     var pts = [], i, j, k, maxS = -1e9;
-    for (i = 0; i <= NR; i++) { pts.push([]); for (j = 0; j < NS; j++) { var t = i / NR, p = contour(P.shape, P.A, j / NS * Math.PI * 2, side), x = p[0] * t, y = p[1] * t, s = sg(x, y); if (s > maxS) maxS = s; pts[i].push([x, y, s]); } }
+    for (i = 0; i <= NR; i++) { pts.push([]); for (j = 0; j < NS; j++) { var t = i / NR, p = rx.contour ? rx.contour(j / NS * Math.PI * 2) : contour(P.shape, P.A, j / NS * Math.PI * 2, side), x = p[0] * t, y = p[1] * t, s = cust ? 0 : sg(x, y); if (s > maxS) maxS = s; pts[i].push([x, y, s]); } }
     var t0 = Math.max(ctMin(n), 1.0 + maxS);
     var fp = [], bp = [], idx = [];
-    for (i = 0; i <= NR; i++) for (j = 0; j < NS; j++) { var q = pts[i][j], zf = -fsag(q[0], q[1]), th2 = t0 - q[2]; q[3] = zf; q[4] = th2; fp.push(q[0], q[1], zf); bp.push(q[0], q[1], zf - th2); }
+    for (i = 0; i <= NR; i++) for (j = 0; j < NS; j++) { var q = pts[i][j], zf = -fsag(q[0], q[1]), th2 = cust ? Math.max(0.3, rx.thk(q[0], q[1])) : t0 - q[2]; q[3] = zf; q[4] = th2; fp.push(q[0], q[1], zf); bp.push(q[0], q[1], zf - th2); }
     for (i = 0; i < NR; i++) for (j = 0; j < NS; j++) { var a = i * NS + j, b = i * NS + (j + 1) % NS, c = (i + 1) * NS + j, d = (i + 1) * NS + (j + 1) % NS; idx.push(a, c, b, b, c, d); }
     var gf = new THREE.BufferGeometry(); gf.setAttribute('position', new THREE.Float32BufferAttribute(fp, 3)); gf.setIndex(idx); gf.computeVertexNormals();
     var gb = new THREE.BufferGeometry(); gb.setAttribute('position', new THREE.Float32BufferAttribute(bp, 3)); gb.setIndex(idx.slice().reverse()); gb.computeVertexNormals();
@@ -46,7 +46,7 @@
     for (i = 0; i < NR; i++) for (j = 0; j < NS; j++) { var A0 = pts[i][j], B0 = pts[i][(j + 1) % NS], C0 = pts[i + 1][j], D0 = pts[i + 1][(j + 1) % NS];
       var ar = Math.abs((C0[0] - A0[0]) * (B0[1] - A0[1]) - (B0[0] - A0[0]) * (C0[1] - A0[1])) / 2 + Math.abs((C0[0] - D0[0]) * (B0[1] - D0[1]) - (B0[0] - D0[0]) * (C0[1] - D0[1])) / 2;
       vol += ar * (A0[4] + B0[4] + C0[4] + D0[4]) / 4; }
-    return { gf: gf, gb: gb, ge: ge, rim: rim, back: back, stats: { maxE: maxE, minE: minE, ct: t0 - sg(ocx, ocy), g: vol / 1000 * (DENS[String(n)] || 1.3), maxP: maxP, n: n } };
+    return { gf: gf, gb: gb, ge: ge, rim: rim, back: back, stats: { maxE: maxE, minE: minE, ct: cust ? rx.thk(ocx, ocy) : t0 - sg(ocx, ocy), g: rx.g != null ? rx.g : vol / 1000 * (DENS[String(n)] || 1.3), maxP: maxP, n: n, oc: [ocx, ocy], label: rx.label } };
   }
   function label(text, color) {
     var c = document.createElement('canvas'); c.width = 256; c.height = 96; var g = c.getContext('2d'); g.font = '700 44px Arial'; var w = Math.min(248, g.measureText(text).width + 44);
@@ -72,7 +72,7 @@
       var mb = new THREE.Mesh(L.gb, lm), me = new THREE.Mesh(L.ge, em), mf = new THREE.Mesh(L.gf, lm); mb.renderOrder = 5; me.renderOrder = 6; mf.renderOrder = 7; g.add(mb, me, mf);
       var rp = L.rim.map(function (v) { var k = 1 + (acet ? rr * 0.75 : rr * 0.6) / Math.max(8, Math.sqrt(v.x * v.x + v.y * v.y)); return V(v.x * k, v.y * k, v.z); });
       g.add(tube(rp, rr, true, fm, 120)); rims[key] = rp.map(function (v) { return V(v.x + side * xc, v.y, v.z); }); backs[key] = L.back.map(function (v) { return V(v.x + side * xc, v.y, v.z); });
-      var plus = L.stats.ct > L.stats.maxE, lp = plus ? [-side * (P.A + P.dbl - P.pd) / 2, 2, 1.5] : L.stats.maxP, sp = label((plus ? L.stats.ct : L.stats.maxE).toFixed(1).replace('.', ',') + ' mm'); sp.position.set(lp[0] * (plus ? 1 : 1.16), lp[1] * (plus ? 1 : 1.16) - (plus ? 0 : 3), lp[2] + (plus ? 4 : 0)); g.add(sp); st.labels.push(sp);
+      var plus = L.stats.ct > L.stats.maxE, lp = plus ? [L.stats.oc[0], L.stats.oc[1], 1.5] : L.stats.maxP, sp = label(L.stats.label || (plus ? L.stats.ct : L.stats.maxE).toFixed(1).replace('.', ',') + ' mm'); sp.position.set(lp[0] * (plus ? 1 : 1.16), lp[1] * (plus ? 1 : 1.16) - (plus ? 0 : 3), lp[2] + (plus ? 4 : 0)); g.add(sp); st.labels.push(sp);
       var dot = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffd400, toneMapped: false })); dot.position.set(lp[0], lp[1], lp[2]); g.add(dot); L.stats.plus = plus;
       stats[key] = L.stats; G.add(g);
     });
@@ -114,7 +114,7 @@
   function fitShadow() { if (!st.shadow) return; st.shadow.position.y = st.headOn && st.head ? -78 - 3.9 * HEAD_S + 2 : -34; var k = st.headOn && st.head ? 1 : 0.42; st.shadow.scale.set(k, k, k); }
   var VIEWS = { on: [0, 2, 1], yan: [1, 0.04, 0.06], ust: [0, 1, 0.16], capraz: [0.62, 0.2, 0.76], arka: [-0.5, 0.28, -0.8] };
   function view(name, instant) {
-    if (!st.ready) return; var v = VIEWS[name] || VIEWS.capraz, d = (st.headOn && st.head ? 520 : 300) * Math.max(1, 1.7 / (st.cam.aspect || 1.7)), n = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    if (!st.ready) return; var v = VIEWS[name] || VIEWS.capraz, d = (st.headOn && st.head ? 520 : 300) * (st.zoom || 1) * Math.max(1, 1.7 / (st.cam.aspect || 1.7)), n = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
     var tgt = st.headOn && st.head ? V(0, -18, -40) : V(0, 0, -10), to = V(tgt.x + v[0] / n * d, tgt.y + v[1] / n * d + (name === 'on' ? -d * 0.86 : 0), tgt.z + v[2] / n * d);
     if (name === 'on') to.set(tgt.x, tgt.y + 6, tgt.z + d);
     st.anim = { p0: st.cam.position.clone(), p1: to, t0: st.ctl.target.clone(), t1: tgt, k: instant ? 1 : 0 };
@@ -145,7 +145,7 @@
       function step2() { loadScript(T3 + 'examples/js/controls/OrbitControls.js', function (e) { if (e) return done(e); loadScript(T3 + 'examples/js/loaders/GLTFLoader.js', function (e2) { if (e2) return done(e2); loadScript(T3 + 'examples/js/environments/RoomEnvironment.js', function () { try { setup(base); done(null); } catch (x) { done(x); } }); }); }); }
       if (window.THREE && THREE.REVISION) step2(); else loadScript(T3 + 'build/three.min.js', function (e) { if (e) return done(e); step2(); });
     },
-    set: function (P) { st.P = P; var hv = P.head !== false; if (hv !== st.headOn) { st.headOn = hv; if (st.head) st.head.visible = hv; if (st.ready) view(st.viewName || 'capraz'); } st.auto = !!P.auto; rebuild(); return st.stats; },
+    set: function (P) { st.P = P; st.zoom = P.zoom || 1; var hv = P.head !== false; if (hv !== st.headOn) { st.headOn = hv; if (st.head) st.head.visible = hv; if (st.ready) view(st.viewName || 'capraz'); } st.auto = !!P.auto; rebuild(); return st.stats; },
     view: function (n) { st.viewName = n; view(n); },
     show: function (on) { st.vis = on; if (on) { resize(); if (!st.raf && st.ready) st.raf = requestAnimationFrame(loop); } },
     resize: resize, stats: function () { return st.stats; }, onHead: function (f) { st.onHead = f; }, state: st
