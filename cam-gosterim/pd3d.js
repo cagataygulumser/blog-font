@@ -55,6 +55,8 @@
     '.pd3-bar button{background:rgba(255,255,255,.86);border:1px solid #d3dbe8;padding:6px 10px;font-size:11.5px}' +
     '.pd3-bar button.on{background:#14233b;border-color:#14233b;color:#fff}' +
     '.pd3-hint{position:absolute;right:10px;top:12px;z-index:2;font-weight:600;font-size:11px;line-height:1.3;color:#5a6780;max-width:46%;text-align:right;pointer-events:none}' +
+    '@media (pointer:coarse){.pd3-sw button{padding:10px 14px}.pd3-bar button{padding:10px 12px;font-size:12.5px}}' +
+    '@media (max-width:600px){.pd3-hint{display:none}.pd3-bar{gap:3px}}' +
     '@media print{.pd3-sw,.pd3-box{display:none!important}}';
   document.head.appendChild(css);
 
@@ -85,7 +87,7 @@
     var s = document.createElement('script'); s.src = BASE + 'cgs3d.js'; s.charset = 'utf-8'; s.onload = go; s.onerror = function () { loading = false; msg.textContent = '3B model yüklenemedi. Bağlantınızı kontrol edip yeniden deneyin.'; }; document.head.appendChild(s);
   }
   function mode(m) {
-    on = m === '3'; box.hidden = !on; [].forEach.call(sw.querySelectorAll('button'), function (b) { b.classList.toggle('on', b.getAttribute('data-m') === m); b.setAttribute('aria-pressed', b.getAttribute('data-m') === m ? 'true' : 'false'); });
+    on = m === '3'; box.hidden = !on; var sw0 = stage.clientWidth; stage.style.minHeight = on && sw0 < 560 ? Math.round(Math.min(sw0 * 0.86, (window.innerHeight || 700) * 0.62)) + 'px' : ''; [].forEach.call(sw.querySelectorAll('button'), function (b) { b.classList.toggle('on', b.getAttribute('data-m') === m); b.setAttribute('aria-pressed', b.getAttribute('data-m') === m ? 'true' : 'false'); });
     if (on) { load(); if (ready) { window.CGS3D.show(true); push(); } } else if (ready) window.CGS3D.show(false);
   }
   sw.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (b) mode(b.getAttribute('data-m')); });

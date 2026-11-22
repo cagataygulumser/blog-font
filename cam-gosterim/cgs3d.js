@@ -52,7 +52,7 @@
     var c = document.createElement('canvas'); c.width = 256; c.height = 96; var g = c.getContext('2d'); g.font = '700 44px Arial'; var w = Math.min(248, g.measureText(text).width + 44);
     g.fillStyle = color || '#ffd400'; var x = (256 - w) / 2, r = 34; g.beginPath(); g.moveTo(x + r, 14); g.arcTo(x + w, 14, x + w, 82, r); g.arcTo(x + w, 82, x, 82, r); g.arcTo(x, 82, x, 14, r); g.arcTo(x, 14, x + w, 14, r); g.closePath(); g.fill();
     g.fillStyle = '#14233b'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 128, 50);
-    var tx = new THREE.CanvasTexture(c), sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, depthTest: false, transparent: true, toneMapped: false, sizeAttenuation: false })); sp.scale.set(0.088, 0.033, 1); sp.renderOrder = 20; return sp;
+    var tx = new THREE.CanvasTexture(c), sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, depthTest: false, transparent: true, toneMapped: false, sizeAttenuation: false })); var k = st.lk || 1; sp.scale.set(0.088 * k, 0.033 * k, 1); sp.renderOrder = 20; return sp;
   }
   function tube(points, rad, closed, mat, seg) { var cv = new THREE.CatmullRomCurve3(points, !!closed, 'catmullrom', 0.5); return new THREE.Mesh(new THREE.TubeGeometry(cv, seg || 64, rad, 10, !!closed), mat); }
   function V(x, y, z) { return new THREE.Vector3(x, y, z); }
@@ -124,7 +124,7 @@
     if (st.anim) { var a = st.anim; a.k = Math.min(1, a.k + 0.06); var e = a.k * a.k * (3 - 2 * a.k); st.cam.position.lerpVectors(a.p0, a.p1, e); st.ctl.target.lerpVectors(a.t0, a.t1, e); if (a.k >= 1) st.anim = null; }
     st.ctl.autoRotate = st.auto && !st.anim; st.ctl.update(); st.r.render(st.sc, st.cam); st.raf = requestAnimationFrame(loop);
   }
-  function resize() { if (!st.ready) return; var w = st.el.clientWidth || 2, h = st.el.clientHeight || 2, oa = st.cam.aspect; st.r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); st.r.setSize(w, h, false); st.cam.aspect = w / h; st.cam.updateProjectionMatrix(); if (Math.abs(oa - w / h) > 0.15 && st.vis) view(st.viewName || 'capraz', true); }
+  function resize() { if (!st.ready) return; var w = st.el.clientWidth || 2, h = st.el.clientHeight || 2, oa = st.cam.aspect; st.r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); st.r.setSize(w, h, false); st.cam.aspect = w / h; st.cam.updateProjectionMatrix(); var lk = cl(430 / h, 1, 1.8); if (Math.abs(lk - (st.lk || 1)) > 0.02) { st.lk = lk; st.labels.forEach(function (sp) { sp.scale.set(0.088 * lk, 0.033 * lk, 1); }); } if (Math.abs(oa - w / h) > 0.15 && st.vis) view(st.viewName || 'capraz', true); }
   function setup(base) {
     var r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: false }); st.r = r; r.outputEncoding = THREE.sRGBEncoding; r.domElement.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none'; st.el.appendChild(r.domElement);
     var sc = new THREE.Scene(); st.sc = sc;
@@ -132,7 +132,7 @@
     try { if (THREE.RoomEnvironment && THREE.PMREMGenerator) { var pm = new THREE.PMREMGenerator(r); sc.environment = pm.fromScene(new THREE.RoomEnvironment(), 0.04).texture; } } catch (x) {}
     sc.add(new THREE.HemisphereLight(0xffffff, 0x9aa6b8, sc.environment ? 0.25 : 0.8)); var k = new THREE.DirectionalLight(0xffffff, sc.environment ? 0.55 : 0.8); k.position.set(120, 220, 300); sc.add(k); var f = new THREE.DirectionalLight(0xdfe9ff, 0.2); f.position.set(-260, 60, 120); sc.add(f);
     st.cam = new THREE.PerspectiveCamera(26, 16 / 9, 5, 4000); st.cam.position.set(260, 60, 360);
-    st.ctl = new THREE.OrbitControls(st.cam, r.domElement); st.ctl.enableDamping = true; st.ctl.dampingFactor = 0.08; st.ctl.enablePan = false; st.ctl.minDistance = 120; st.ctl.maxDistance = 900; st.ctl.autoRotateSpeed = 1.4; st.ctl.addEventListener('start', function () { st.anim = null; });
+    st.ctl = new THREE.OrbitControls(st.cam, r.domElement); st.ctl.enableDamping = true; st.ctl.dampingFactor = 0.08; st.ctl.enablePan = false; st.ctl.rotateSpeed = 0.7; st.ctl.minDistance = 120; st.ctl.maxDistance = 900; st.ctl.autoRotateSpeed = 1.4; st.ctl.addEventListener('start', function () { st.anim = null; });
     var c = document.createElement('canvas'); c.width = c.height = 256; var g = c.getContext('2d'), gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, 'rgba(20,40,80,.3)'); gr.addColorStop(1, 'rgba(20,40,80,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
     st.shadow = new THREE.Mesh(new THREE.PlaneGeometry(520, 520), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); st.shadow.rotation.x = -Math.PI / 2; sc.add(st.shadow);
     new THREE.GLTFLoader().load(base + 'head.glb', function (gl) { var h = gl.scene; h.traverse(function (o) { if (o.isMesh) o.material = new THREE.MeshStandardMaterial({ color: LC(0xd9b9a6), roughness: 0.82, metalness: 0, envMapIntensity: 0.55 }); }); h.scale.set(HEAD_S, HEAD_S, HEAD_S); h.position.set(HEAD_OFF[0], HEAD_OFF[1], HEAD_OFF[2]); h.rotation.y = HEAD_RY; h.visible = st.headOn; st.head = h; sc.add(h); fitShadow(); rebuild(); view(st.viewName || 'capraz', true); if (st.onHead) st.onHead(); }, undefined, function () { st.headFail = true; if (st.onHead) st.onHead(); });
