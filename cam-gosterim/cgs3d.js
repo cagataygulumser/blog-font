@@ -7,6 +7,7 @@
   var DENS = { '1.5': 1.32, '1.56': 1.23, '1.59': 1.20, '1.6': 1.30, '1.67': 1.36, '1.74': 1.47 };
   var COLORS = { siyah: 0x16181d, altin: 0xc9a24a, gumus: 0xb8c0c9, kahve: 0x6b4428, lacivert: 0x1d3a6e };
   var HEAD_S = 48, HEAD_OFF = [0, -77.5, -111];
+  var EAR = [74, 9, -99];
   var st = { ready: false, loading: false, el: null, r: null, sc: null, cam: null, ctl: null, glasses: null, head: null, shadow: null,
     raf: 0, vis: false, auto: false, P: null, stats: null, labels: [], headOn: true, cbs: [] };
 
@@ -82,7 +83,7 @@
       G.add(tube([pr, V(pr.x - s * 1.5, pr.y - 2, pr.z - 4), V(s * 8.5, pr.y - 4.5, pr.z - 7)], 0.45, false, fm, 16));
       var pad = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf2f4f7, transparent: true, opacity: 0.8, roughness: 0.2 })); pad.scale.set(0.45, 1, 0.75); pad.position.set(s * 8.2, pr.y - 5, pr.z - 7.6); pad.rotation.z = s * 0.35; G.add(pad); }); }
     [-1, 1].forEach(function (s) { var tp = pick(s < 0 ? rims.r : rims.l, function (v) { return s * v.x * 1 + v.y * 0.45; }), tr = acet ? 1.9 : 0.85, ex = s * Math.max(Math.abs(tp.x) + 6, 70);
-      G.add(tube([tp, V(tp.x + s * 3.2, tp.y + 0.4, tp.z - 1.5), V(tp.x + s * 4.5, tp.y, tp.z - 9), V(ex, tp.y - 3, -58), V(s * 74, -5, -93), V(s * 73.5, -14, -108), V(s * 72, -29, -114)], tr, false, fm, 70)); });
+      G.add(tube([tp, V(tp.x + s * 3.2, tp.y + 0.4, tp.z - 1.5), V(tp.x + s * 4.5, tp.y, tp.z - 9), V(ex + s * 1.5, tp.y * 0.55 + EAR[1] * 0.45, -52), V(s * EAR[0], EAR[1], EAR[2]), V(s * (EAR[0] - 1), EAR[1] - 5, EAR[2] - 13), V(s * (EAR[0] - 3), EAR[1] - 19, EAR[2] - 21), V(s * (EAR[0] - 5), EAR[1] - 34, EAR[2] - 22)], tr, false, fm, 90)); });
     st.sc.add(G); st.stats = stats; fitShadow();
   }
   function fitShadow() { if (!st.shadow) return; st.shadow.position.y = st.headOn && st.head ? -78 - 3.9 * HEAD_S + 2 : -34; var k = st.headOn && st.head ? 1 : 0.42; st.shadow.scale.set(k, k, k); }
