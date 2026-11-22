@@ -3,8 +3,8 @@
   'use strict';
   var root = document.getElementById('cgt-isin'); if (!root || root.querySelector('canvas')) return;
   var W = 1000, H = 470, AX = H / 2, KD = 3400;
-  var M = [['yak', 'Yakınsak mercek'], ['ira', 'Iraksak mercek'], ['nes', 'Nesne ve görüntü'], ['goz', 'Göz ve gözlük camı'], ['pri', 'Prizma']];
-  var S = { m: 'yak', p: 5, lx: 420, u: 30, k: -4, sp: 0, pr: 6, base: 'asagi', n: 7 };
+  var M = [['yak', 'Yakınsak mercek'], ['ira', 'Iraksak mercek'], ['nes', 'Nesne ve görüntü'], ['goz', 'Göz ve gözlük camı'], ['pri', 'Prizma'], ['ser', 'Serbest tezgâh']];
+  var S = { m: 'yak', p: 5, lx: 420, u: 30, k: -4, sp: 0, pr: 6, base: 'asagi', n: 7, src: 'par', els: [{ t: 'L', x: 300, p: 6 }, { t: 'L', x: 560, p: -5 }] };
   function $(i) { return document.getElementById(i); }
   function f1(v, d) { return v.toFixed(d == null ? 1 : d).replace('.', ',').replace('-', '−'); }
   function sg(v) { return (v > 0 ? '+' : '') + f1(v, 2); }
@@ -51,6 +51,11 @@
       var fx = last ? last.x - (last.y - AX) / last.sl : rx, df = fx - rx; dot(fx, AX, '#ff7a59', 'odak', 26); g.fillStyle = '#ff9ecf'; g.font = '700 14px Arial'; g.textAlign = 'center'; g.fillText('retina', rx + 6, AX - 162);
       var st = Math.abs(df) < 4 ? 'Odak <b>tam retinada</b>: görüntü net.' : df < 0 ? 'Odak retinanın <b>önünde</b> kalıyor: uzak bulanık görülür (miyop gibi).' : 'Odak retinanın <b>arkasına</b> düşüyor: görüntü bulanık (hipermetrop gibi).';
       info = '<b>Göz ve gözlük camı:</b> Göz ' + (S.k === 0 ? 'kusursuz (emetrop)' : S.k < 0 ? sg(S.k) + ' D miyop: göz uzun, ışık retinanın önünde odaklanır' : sg(S.k) + ' D hipermetrop: göz kısa, ışık retinanın arkasında odaklanır') + '. Gözün önünde ' + (Math.abs(S.sp) < .01 ? 'cam yok' : sg(S.sp) + ' D cam var') + '. ' + st + ' Miyopta eksi, hipermetropta artı cam odağı retinaya taşır. Camın gücünü değiştirerek odağı retinaya getirmeyi deneyin.';
+    } else if (m === 'ser') {
+      var el5 = S.els.map(function (e) { return e.t === 'L' ? { x: e.x, P: e.p / 400 } : { x: e.x, d: e.p / 100 * 4 }; });
+      if (S.src === 'par') ys.forEach(function (y) { trace(0, y, 0, el5, W, col, true); }); else { dot(60, AX, '#7dffb0', 'kaynak', 24); [-0.42, -0.28, -0.14, 0, 0.14, 0.28, 0.42].forEach(function (sl) { trace(60, AX, sl, el5, W, col); }); }
+      S.els.forEach(function (e, i) { if (e.t === 'L') lens(e.x, e.p, 170, (i + 1) + ' · ' + sg(e.p) + ' D'); else { var t5 = 12 + Math.abs(e.p) * 2.5, up = e.p < 0; g.fillStyle = 'rgba(120,190,255,.28)'; g.strokeStyle = '#9fd0ff'; g.lineWidth = 2; g.beginPath(); g.moveTo(e.x, up ? AX + 130 : AX - 130); g.lineTo(e.x + t5, up ? AX - 130 : AX + 130); g.lineTo(e.x - t5, up ? AX - 130 : AX + 130); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#cfe3ff'; g.font = '700 14px Arial'; g.textAlign = 'center'; g.fillText((i + 1) + ' · ' + f1(Math.abs(e.p), 1) + ' Δ', e.x, 30); } });
+      info = '<b>Serbest tezgâh:</b> Mercek ve prizma ekleyin, güçlerini ve yerlerini değiştirin; ışınların her elemanda nasıl kırıldığını izleyin. İki merceği art arda koyarak toplam etkiyi, bir artı ve bir eksi mercekle birbirini nasıl dengelediklerini deneyin. Nokta kaynakta ışınlar tek noktadan yayılır.';
     } else {
       var px = 380, d = S.pr / 100 * (S.base === 'asagi' ? 1 : -1), sxs = 880;
       [AX - 40, AX, AX + 40].forEach(function (y) { trace(0, y, 0, [{ x: px, d: d * 4 }], sxs, col); });
@@ -68,15 +73,18 @@
     if (S.m === 'yak' || S.m === 'ira') h += row('p', 'Mercek gücü', 1.5, 12, 0.25, Math.abs(S.p), txt('p')) + '<div style="height:10px"></div>' + row('lx', 'Mercek konumu', 200, 640, 5, S.lx, '') + '<div style="height:10px"></div>' + row('n', 'Işın sayısı', 3, 11, 2, S.n, txt('n'));
     else if (S.m === 'nes') h += row('p', 'Mercek gücü', -10, 12, 0.25, S.p, txt('p')) + '<div style="height:10px"></div>' + row('u', 'Nesne uzaklığı', 6, 110, 1, S.u, txt('u'));
     else if (S.m === 'goz') h += row('k', 'Göz kusuru', -8, 8, 0.25, S.k, txt('k')) + '<div style="height:10px"></div>' + row('sp', 'Gözlük camı', -10, 10, 0.25, S.sp, txt('sp')) + '<div style="height:10px"></div><div class="cgt-chips"><button type="button" class="cgt-btn y" data-a="fix">Camı uygun güce getir</button><button type="button" class="cgt-btn" data-a="off">Camı çıkar</button></div>';
+    else if (S.m === 'ser') { h += '<div class="cgt-chips"><button type="button" class="cgt-chip' + (S.src === 'par' ? ' on' : '') + '" data-s="par">Paralel ışık</button><button type="button" class="cgt-chip' + (S.src === 'nok' ? ' on' : '') + '" data-s="nok">Nokta kaynak</button></div>';
+      S.els.forEach(function (e, i) { h += '<div style="border-top:1px solid #d7e0ee;margin-top:10px;padding-top:10px"><div class="cgt-row"><span>' + (i + 1) + ' · ' + (e.t === 'L' ? 'Mercek' : 'Prizma') + '</span><b id="isE' + i + '">' + (e.t === 'L' ? sg(e.p) + ' D' : f1(Math.abs(e.p), 1) + ' Δ ' + (e.p < 0 ? 'taban yukarı' : 'taban aşağı')) + '</b></div><input type="range" data-e="' + i + '" data-f="p" min="' + (e.t === 'L' ? -12 : -10) + '" max="' + (e.t === 'L' ? 12 : 10) + '" step="' + (e.t === 'L' ? 0.25 : 0.5) + '" value="' + e.p + '"><div style="height:6px"></div><input type="range" data-e="' + i + '" data-f="x" min="120" max="900" step="5" value="' + e.x + '" aria-label="Konum"><div style="height:6px"></div><button type="button" class="cgt-btn" data-x="' + i + '">Kaldır</button></div>'; });
+      h += '<div style="height:10px"></div><div class="cgt-chips"><button type="button" class="cgt-btn y" data-add="L"' + (S.els.length >= 4 ? ' disabled' : '') + '>Mercek ekle</button><button type="button" class="cgt-btn" data-add="P"' + (S.els.length >= 4 ? ' disabled' : '') + '>Prizma ekle</button></div>'; }
     else h += row('pr', 'Prizma gücü', 1, 12, 0.5, S.pr, txt('pr')) + '<div style="height:10px"></div><div class="cgt-chips"><button type="button" class="cgt-chip' + (S.base === 'asagi' ? ' on' : '') + '" data-b="asagi">Taban aşağı</button><button type="button" class="cgt-chip' + (S.base === 'yukari' ? ' on' : '') + '" data-b="yukari">Taban yukarı</button></div>';
     $('isP').innerHTML = h + '</div>';
   }
   $('isP').addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return; var m = b.getAttribute('data-m'), a = b.getAttribute('data-a'), bs = b.getAttribute('data-b');
     if (m) { S.m = m; if (m === 'nes') { S.p = 5; S.u = 30; } else if (m === 'yak' || m === 'ira') S.p = 5; }
-    else if (a === 'fix') S.sp = S.k; else if (a === 'off') S.sp = 0; else if (bs) S.base = bs;
+    else if (a === 'fix') S.sp = S.k; else if (b.hasAttribute('data-s')) S.src = b.getAttribute('data-s'); else if (b.hasAttribute('data-x')) S.els.splice(+b.getAttribute('data-x'), 1); else if (b.hasAttribute('data-add')) { if (S.els.length < 4) S.els.push({ t: b.getAttribute('data-add'), x: 200 + S.els.length * 160, p: b.getAttribute('data-add') === 'L' ? 4 : 4 }); } else if (a === 'off') S.sp = 0; else if (bs) S.base = bs;
     panel(); render();
   });
-  $('isP').addEventListener('input', function (e) { var el = e.target, k = el.getAttribute('data-k'); if (!k) return; S[k] = +el.value; if (k === 'p' && S.m === 'nes' && Math.abs(S.p) < .25) S.p = .25; var o = $('isV_' + k); if (o) o.textContent = txt(k); render(); });
+  $('isP').addEventListener('input', function (e) { var el = e.target, k = el.getAttribute('data-k'); if (el.hasAttribute('data-e')) { var ee = S.els[+el.getAttribute('data-e')]; ee[el.getAttribute('data-f')] = +el.value; if (ee.t === 'L' && Math.abs(ee.p) < .25) ee.p = .25; var oo = $('isE' + el.getAttribute('data-e')); if (oo) oo.textContent = ee.t === 'L' ? sg(ee.p) + ' D' : f1(Math.abs(ee.p), 1) + ' Δ ' + (ee.p < 0 ? 'taban yukarı' : 'taban aşağı'); render(); return; } if (!k) return; S[k] = +el.value; if (k === 'p' && S.m === 'nes' && Math.abs(S.p) < .25) S.p = .25; var o = $('isV_' + k); if (o) o.textContent = txt(k); render(); });
   panel(); render();
 })();
