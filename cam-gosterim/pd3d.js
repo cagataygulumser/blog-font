@@ -4,6 +4,40 @@
   'use strict';
   var root = document.getElementById('pdsim-app'), D = window.PDSIM; if (!root || !D || root.querySelector('.pd3-sw')) return;
   var cs = document.currentScript, BASE = cs && cs.src ? cs.src.replace(/[^\/]*$/, '') : '';
+
+  /* ---------- tam ekran (uygulama) modu ---------- */
+  (function () {
+    var head = root.querySelector('.pdsim-head'), ref = root.querySelector('[data-print]'); if (!head) return;
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'pdsim-btn pd-fsb'; btn.textContent = 'Tam ekran'; btn.setAttribute('aria-pressed', 'false');
+    if (ref && ref.parentNode) ref.parentNode.insertBefore(btn, ref.nextSibling); else head.appendChild(btn);
+    var st = document.createElement('style');
+    st.textContent = '.pdsim .pd-fsb{background:#ffd400;border-color:#e6bf00;color:#14233b}' +
+      '#pdsim-app.pd-fs{position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483000;margin:0;max-width:none;width:auto;height:auto;border:0;border-radius:0;box-shadow:none;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;box-sizing:border-box;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));padding-bottom:calc(16px + env(safe-area-inset-bottom))}' +
+      'html.pd-fs-on,html.pd-fs-on body{overflow:hidden!important}' +
+      '@media print{.pd-fsb{display:none!important}}body.pdsim-printing .pd-fsb{display:none!important}';
+    document.head.appendChild(st);
+    var on = false, mark = null, sy = 0, de = document.documentElement;
+    function fsEl() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+    function enter() {
+      if (on) return; on = true; sy = window.pageYOffset || 0;
+      var bg = getComputedStyle(root).backgroundColor; if (!bg || /rgba\(0, 0, 0, 0\)|transparent/.test(bg)) bg = getComputedStyle(document.body).backgroundColor; root.style.backgroundColor = bg;
+      mark = document.createComment('pdsim'); root.parentNode.insertBefore(mark, root); document.body.appendChild(root);
+      root.classList.add('pd-fs'); de.classList.add('pd-fs-on'); root.scrollTop = 0; btn.textContent = 'Tam ekrandan çık'; btn.setAttribute('aria-pressed', 'true');
+      var rq = de.requestFullscreen || de.webkitRequestFullscreen; if (rq) { try { var pr = rq.call(de); if (pr && pr.catch) pr.catch(function () {}); } catch (x) {} }
+    }
+    function leave() {
+      if (!on) return; on = false; root.classList.remove('pd-fs'); de.classList.remove('pd-fs-on'); root.style.backgroundColor = '';
+      if (mark && mark.parentNode) { mark.parentNode.insertBefore(root, mark); mark.parentNode.removeChild(mark); } mark = null;
+      btn.textContent = 'Tam ekran'; btn.setAttribute('aria-pressed', 'false');
+      if (fsEl()) { var ex = document.exitFullscreen || document.webkitExitFullscreen; if (ex) { try { var pr = ex.call(document); if (pr && pr.catch) pr.catch(function () {}); } catch (x) {} } }
+      window.scrollTo(0, sy);
+    }
+    btn.addEventListener('click', function () { if (on) leave(); else enter(); });
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (n) { document.addEventListener(n, function () { if (on && !fsEl() && entered) leave(); entered = !!fsEl(); }); });
+    var entered = false;
+    document.addEventListener('keydown', function (ev) { if (on && ev.key === 'Escape' && !fsEl()) leave(); });
+    if (ref) ref.addEventListener('click', function () { if (on) leave(); }, true);
+  })();
   var stage = root.querySelector('.pdsim-stage'), svg = stage && stage.querySelector('svg'); if (!svg) return;
   var on = false, ready = false, loading = false, head = true, vname = 'capraz', tmr = 0;
   function el(t, c, h) { var e = document.createElement(t); e.className = c; if (h) e.innerHTML = h; return e; }
