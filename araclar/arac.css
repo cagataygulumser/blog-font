@@ -1,0 +1,22 @@
+/* cagataygulumser.com — araç sayfaları ortak stil */
+.cgt{--b1:#004aad;--b2:#2f86ff;--ink:#14233b;--mut:#5b6b82;--line:#d7e0ee;--soft:#f3f7fd;--y:#ffd400;max-width:1180px;margin:0 auto;color:var(--ink);font-size:15.5px;line-height:1.55}
+.cgt *{box-sizing:border-box}
+.cgt-lead{font-size:16.5px;color:#243247;margin:0 0 14px}
+.cgt-main{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+.cgt-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:14px}
+.cgt-h{margin:0 0 7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--b1)}
+.cgt-chips{display:flex;flex-wrap:wrap;gap:6px}
+.cgt-chip,.cgt-btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 13px;font:inherit;font-size:13.5px;font-weight:700;color:var(--ink);cursor:pointer}
+.cgt-chip.on{background:var(--b1);border-color:var(--b1);color:#fff}
+.cgt-btn.y{background:var(--y);border-color:#e6bf00}.cgt-btn.b{background:var(--b1);border-color:var(--b1);color:#fff}.cgt-btn:disabled{opacity:.5;cursor:default}
+.cgt-row{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;font-weight:600;margin-bottom:4px}.cgt-row b{color:var(--b1)}
+.cgt input[type=range]{width:100%;accent-color:var(--b1);margin:0}
+.cgt-stage{position:relative;background:#0b1730;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(20,35,59,.14)}
+.cgt-stage canvas,.cgt-stage video{display:block;width:100%;height:auto}
+.cgt-info{margin-top:14px;background:#fff;border:1px solid var(--line);border-left:5px solid var(--b1);border-radius:12px;padding:13px 16px;font-size:14.5px}.cgt-info b{color:var(--b1)}
+.cgt-note{font-size:12.5px;color:var(--mut);margin:12px 2px 0}
+.cgt-hud{position:absolute;left:12px;top:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.cgt-hud div{background:rgba(8,20,45,.82);color:#fff;border-radius:12px;padding:8px 12px;font-size:12px;line-height:1.25}.cgt-hud b{display:block;font-size:19px;color:var(--y)}
+.cgt-tog{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;cursor:pointer}
+.cgt select,.cgt input[type=number],.cgt input[type=text]{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;width:100%;background:#fff;color:var(--ink)}
+@media(max-width:860px){.cgt-main{grid-template-columns:1fr}.cgt-stage{order:-1}.cgt-main>.cgt-col{order:-1}}

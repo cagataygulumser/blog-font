@@ -58,7 +58,7 @@
     return { gf: gf, gb: gb, ge: ge, rim: rim, back: back, stats: { maxE: maxE, minE: minE, ct: cust ? rx.thk(ocx, ocy) : t0 - sg(ocx, ocy), g: rx.g != null ? rx.g : vol / 1000 * (DENS[String(n)] || 1.3), maxP: maxP, n: n, oc: [ocx, ocy], label: fac ? null : rx.label, maxE0: maxE0, fac: fac } };
   }
   function label(text, color) {
-    var c = document.createElement('canvas'); c.width = 256; c.height = 96; var g = c.getContext('2d'); g.font = '700 44px Arial'; var w = Math.min(248, g.measureText(text).width + 44);
+    var c = document.createElement('canvas'); c.width = 256; c.height = 96; var g = c.getContext('2d'), fs = 44; g.font = '700 44px Arial'; while (fs > 22 && g.measureText(text).width > 206) { fs -= 2; g.font = '700 ' + fs + 'px Arial'; } var w = Math.min(248, g.measureText(text).width + 44);
     g.fillStyle = color || '#ffd400'; var x = (256 - w) / 2, r = 34; g.beginPath(); g.moveTo(x + r, 14); g.arcTo(x + w, 14, x + w, 82, r); g.arcTo(x + w, 82, x, 82, r); g.arcTo(x, 82, x, 14, r); g.arcTo(x, 14, x + w, 14, r); g.closePath(); g.fill();
     g.fillStyle = '#14233b'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 128, 50);
     var tx = new THREE.CanvasTexture(c), sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tx, depthTest: false, transparent: true, toneMapped: false, sizeAttenuation: false })); var k = st.lk || 1; sp.scale.set(0.088 * k, 0.033 * k, 1); sp.renderOrder = 20; return sp;
@@ -81,8 +81,8 @@
       var mb = new THREE.Mesh(L.gb, lm), me = new THREE.Mesh(L.ge, em), mf = new THREE.Mesh(L.gf, lm); mb.renderOrder = 5; me.renderOrder = 6; mf.renderOrder = 7; g.add(mb, me, mf);
       var rp = L.rim.map(function (v) { var k = 1 + (acet ? rr * 0.75 : rr * 0.6) / Math.max(8, Math.sqrt(v.x * v.x + v.y * v.y)); return V(v.x * k, v.y * k, v.z); });
       g.add(tube(rp, rr, true, fm, 120)); rims[key] = rp.map(function (v) { return V(v.x + side * xc, v.y, v.z); }); backs[key] = L.back.map(function (v) { return V(v.x + side * xc, v.y, v.z); });
-      var plus = L.stats.ct > L.stats.maxE, lp = plus ? [L.stats.oc[0], L.stats.oc[1], 1.5] : L.stats.maxP, sp = label(L.stats.label || (plus ? L.stats.ct : L.stats.maxE).toFixed(1).replace('.', ',') + ' mm'); sp.position.set(lp[0] * (plus ? 1 : 1.16), lp[1] * (plus ? 1 : 1.16) - (plus ? 0 : 3), lp[2] + (plus ? 4 : 0)); g.add(sp); st.labels.push(sp);
-      var dot = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffd400, toneMapped: false })); dot.position.set(lp[0], lp[1], lp[2]); g.add(dot); L.stats.plus = plus;
+      var plus = L.stats.ct > L.stats.maxE, lp = plus ? [L.stats.oc[0], L.stats.oc[1], 1.5] : L.stats.maxP, sp = label(L.stats.label || (plus ? L.stats.ct : L.stats.maxE).toFixed(1).replace('.', ',') + ' mm'); sp.position.set(lp[0] * (plus ? 1 : 1.16), lp[1] * (plus ? 1 : 1.16) - (plus ? 0 : 3), lp[2] + (plus ? 4 : 0)); if (!P.nolab) { g.add(sp); st.labels.push(sp); }
+      var dot = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffd400, toneMapped: false })); dot.position.set(lp[0], lp[1], lp[2]); if (!P.nolab) g.add(dot); L.stats.plus = plus;
       stats[key] = L.stats; G.add(g);
     });
     /* --- yüze oturtma: pantoskopik eğim + burun/kaş/yanak temasına göre mesafe --- */
@@ -95,6 +95,7 @@
       dz = cl(need, -3.5, 24); G.position.z = dz; G.updateMatrixWorld(true); }
     function pick(arr, fn) { var b = null, bv = -1e9; arr.forEach(function (v) { var s = fn(v); if (s > bv) { bv = s; b = v; } }); return b; }
     function cap(p, r, m) { var c = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), m); c.position.copy(p); return c; }
+    var parts = st.parts = {};
     /* köprü */
     var by = acet ? 5 : 7, nr = pick(rims.r, function (v) { return v.x * 1.4 - Math.abs(v.y - by); }), nl = pick(rims.l, function (v) { return -v.x * 1.4 - Math.abs(v.y - by); });
     G.add(tube([nr, V(nr.x * 0.5, nr.y + 1.5, nr.z + 0.9), V(0, nr.y + 2, nr.z + 1.2), V(nl.x * 0.5, nl.y + 1.5, nl.z + 0.9), nl], acet ? 2.2 : 1.0, false, fm, 40));
@@ -105,9 +106,10 @@
         if (onHead) { var best = null, bd = 1e9; for (var x = 5; x <= Math.min(15, Math.abs(pw.x) + 1.5); x += 0.5) { var h = hit(s * x, pw.y - 2); if (h) { var d = Math.abs(h.point.z - (pw.z - 4.5)); if (d < bd) { bd = d; best = h; } } }
           if (best) { nrm = best.face.normal.clone().transformDirection(best.object.matrixWorld); pos = best.point.clone().addScaledVector(nrm, 0.75); } }
         if (!pos) pos = V(pw.x - s * 2.2, pw.y - 2, pw.z - 5.5);
-        var pad = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 14), pm); pad.scale.set(2.5, 4.3, 0.8); pad.quaternion.setFromUnitVectors(V(0, 0, 1), nrm); pad.position.copy(pos); R.add(pad);
+        var pad = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 14), pm); pad.scale.set(2.5, 4.3, 0.8); pad.quaternion.setFromUnitVectors(V(0, 0, 1), nrm); pad.position.copy(pos); R.add(pad); parts[s < 0 ? 'padR' : 'padL'] = pos.clone();
         var back = pos.clone().addScaledVector(nrm, 1.1); R.add(tube([pw, V(pw.x - s * 0.6, pw.y - 0.6, pw.z - 2.6), V((pw.x + back.x) / 2, (pw.y + back.y) / 2 - 0.4, Math.min(pw.z - 3.4, back.z + 0.6)), back], 0.42, false, fm, 20)); R.add(cap(back, 0.6, fm)); }); }
     /* menteşe + saplar */
+    parts.bridge = W(V(0, nr.y + 2, nr.z + 1.2));
     var tm = acet ? fm : new THREE.MeshStandardMaterial({ color: LC(0x15171b), metalness: 0, roughness: 0.38, envMapIntensity: 0.4 });
     [-1, 1].forEach(function (s) { var rimA = s < 0 ? rims.r : rims.l, ymax = 0; rimA.forEach(function (v) { if (v.y > ymax) ymax = v.y; }); var hy = Math.min(9, ymax * 0.55);
       var tp = pick(rimA, function (v) { return s * v.x * 1.4 - Math.abs(v.y - hy); }), tr = acet ? 1.9 : 0.95;
@@ -117,7 +119,11 @@
       var h0 = W(V(hg.x, hg.y, hg.z - 1.2)), E = V(s * EAR[0], EAR[1], EAR[2]), dir = E.clone().sub(h0).normalize(), E0 = E.clone().addScaledVector(dir, -16);
       var bend = [V(E.x + s * 0.2, E.y - 2.2, E.z - 8.5), V(E.x - s * 0.6, E.y - 10, E.z - 15), V(E.x - s * 2.2, E.y - 21, E.z - 18.5), V(E.x - s * 4, E.y - 30, E.z - 19)];
       R.add(tube([h0, h0.clone().lerp(E0, 0.34), h0.clone().lerp(E0, 0.67), E0, E, bend[0]], tr, false, fm, 40));
-      R.add(tube([E0, E.clone().addScaledVector(dir, -6), E].concat(bend), acet ? 2.0 : 1.55, false, tm, 60)); R.add(cap(bend[3], acet ? 2.0 : 1.55, tm)); R.add(cap(E0, acet ? 2.0 : 1.55, tm)); });
+      R.add(tube([E0, E.clone().addScaledVector(dir, -6), E].concat(bend), acet ? 2.0 : 1.55, false, tm, 60)); R.add(cap(bend[3], acet ? 2.0 : 1.55, tm)); parts[s < 0 ? 'hingeR' : 'hingeL'] = h0.clone(); parts[s < 0 ? 'tipR' : 'tipL'] = bend[1].clone(); parts[s < 0 ? 'earR' : 'earL'] = E.clone(); parts[s < 0 ? 'midR' : 'midL'] = h0.clone().lerp(E0, 0.5); R.add(cap(E0, acet ? 2.0 : 1.55, tm)); });
+    if (!st.parts.padR) { st.parts.padR = W(V(-9, -6, -3)); st.parts.padL = W(V(9, -6, -3)); }
+    st.marks = []; (P.marks || []).forEach(function (m) { var q = st.parts[m[0]]; if (!q) return; var b = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffd400, transparent: true, opacity: 0.9, depthTest: false, toneMapped: false })); b.position.copy(q); b.renderOrder = 18; R.add(b); st.marks.push(b);
+      if (m[1]) { var sp = label(m[1]); sp.position.copy(q); sp.position.y += 7; sp.position.x += (q.x < 0 ? -1 : 1) * 4; R.add(sp); st.labels.push(sp); } });
+    var po = P.pose || {}; R.rotation.set(0, po.yaw || 0, po.roll || 0); R.position.set(0, po.dy || 0, po.dz || 0);
     st.dz = dz; st.sc.add(R); st.stats = stats; fitShadow();
   }
   function fitShadow() { if (!st.shadow) return; st.shadow.position.y = st.headOn && st.head ? -78 - 3.9 * HEAD_S + 2 : -34; var k = st.headOn && st.head ? 1 : 0.42; st.shadow.scale.set(k, k, k); }
@@ -131,6 +137,7 @@
   function loop() {
     st.raf = 0; if (!st.vis) return;
     if (st.anim) { var a = st.anim; a.k = Math.min(1, a.k + 0.06); var e = a.k * a.k * (3 - 2 * a.k); st.cam.position.lerpVectors(a.p0, a.p1, e); st.ctl.target.lerpVectors(a.t0, a.t1, e); if (a.k >= 1) st.anim = null; }
+    if (st.marks && st.marks.length) { var pk = 1 + 0.28 * Math.sin(performance.now() / 240); st.marks.forEach(function (m) { m.scale.setScalar(pk); }); }
     st.ctl.autoRotate = st.auto && !st.anim; st.ctl.update(); st.r.render(st.sc, st.cam); st.raf = requestAnimationFrame(loop);
   }
   function resize() { if (!st.ready) return; var w = st.el.clientWidth || 2, h = st.el.clientHeight || 2, oa = st.cam.aspect; st.r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); st.r.setSize(w, h, false); st.cam.aspect = w / h; st.cam.updateProjectionMatrix(); var lk = cl(430 / h, 1, 1.8); if (Math.abs(lk - (st.lk || 1)) > 0.02) { st.lk = lk; st.labels.forEach(function (sp) { sp.scale.set(0.088 * lk, 0.033 * lk, 1); }); } if (Math.abs(oa - w / h) > 0.15 && st.vis) view(st.viewName || 'capraz', true); }
