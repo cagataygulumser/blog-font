@@ -1,0 +1,75 @@
+/* Formül Kartları — çevrilebilir çalışma kartları · cagataygulumser.com */
+(function () {
+  'use strict';
+  var root = document.getElementById('cgt-formul'); if (!root || root.firstChild) return;
+  var K = { hep: 'Tümü', tem: 'Temel optik', rec: 'Reçete', cam: 'Cam', mon: 'Ölçü ve montaj' };
+  /* [id, kategori, ad, soru, formül, açıklama, örnek] */
+  var F = [
+    ['dio', 'tem', 'Dioptri ve odak uzaklığı', 'Bir merceğin gücü odak uzaklığından nasıl bulunur?', 'F = 1 / f', 'F dioptri, f metre cinsinden odak uzaklığıdır.', 'Odak uzaklığı 0,50 m ise F = 1 / 0,50 = +2,00 D'],
+    ['ind', 'tem', 'Kırılma indeksi', 'Bir malzemenin kırılma indeksi neyi anlatır?', 'n = c / v', 'Işığın boşluktaki hızının (c) malzemedeki hızına (v) oranıdır. İndeks büyüdükçe ışık daha çok kırılır.', 'Işık bir malzemede 200.000 km/sn hızla ilerliyorsa n = 300.000 / 200.000 = 1,50'],
+    ['sne', 'tem', 'Snell yasası', 'Işık bir ortamdan diğerine geçerken açılar arasındaki bağıntı nedir?', 'n₁ · sin i = n₂ · sin r', 'i geliş, r kırılma açısıdır; ikisi de yüzeyin normaline göre ölçülür.', 'Havadan (1,00) cama (1,50) 30° ile gelen ışık: sin r = 0,50 / 1,50 → r ≈ 19,5°'],
+    ['kri', 'tem', 'Kritik açı', 'Tam yansıma hangi açıdan sonra başlar?', 'sin θc = n₂ / n₁', 'Işık yoğun ortamdan (n₁) az yoğun ortama (n₂) geçerken geçerlidir.', 'Camdan (1,50) havaya: sin θc = 1 / 1,50 → θc ≈ 41,8°'],
+    ['yan', 'tem', 'Yüzey yansıması', 'Kaplamasız bir cam yüzeyi ışığın ne kadarını yansıtır?', 'R = ((n − 1) / (n + 1))²', 'Tek yüzey için, dik gelen ışıkta. İndeks yükseldikçe yansıma artar; antirefle kaplamanın önemi buradan gelir.', 'n = 1,50 için R = (0,5 / 2,5)² = %4; n = 1,67 için yaklaşık %6,3'],
+    ['prd', 'tem', 'Prizma dioptri', 'Bir prizma dioptri ne kadar sapma demektir?', 'Δ = 100 · tan θ', '1 Δ, ışığı 1 metre uzaklıkta 1 cm saptırır.', '2 Δ’lık prizma 3 m uzaktaki noktayı 6 cm kaydırır'],
+    ['yuz', 'tem', 'Yüzey gücü', 'Eğrilik yarıçapı bilinen bir cam yüzeyinin gücü nedir?', 'F = (n − 1) / r', 'r metre cinsinden eğrilik yarıçapıdır; havadaki yüzey için geçerlidir.', 'n = 1,50 ve r = 0,10 m ise F = 0,50 / 0,10 = +5,00 D'],
+    ['top', 'tem', 'İnce mercekte toplam güç', 'Ön ve arka yüzey güçleri bilinen ince bir camın gücü nedir?', 'F = F₁ + F₂', 'Kalınlık ihmal edildiğinde iki yüzeyin güçleri toplanır.', 'Ön yüzey +6,00 D, arka yüzey −8,00 D ise cam −2,00 D'],
+    ['mrc', 'tem', 'Mercekçi formülü', 'İki eğrilik yarıçapından merceğin gücü nasıl bulunur?', 'F = (n − 1) · (1/r₁ − 1/r₂)', 'r₁ ön, r₂ arka yüzeyin yarıçapıdır (metre).', 'n = 1,50, r₁ = 0,10 m, r₂ = 0,20 m: F = 0,5 × (10 − 5) = +2,50 D'],
+    ['cal', 'tem', 'Mesafe ve dioptri', 'Belirli bir mesafeye odaklanmak için kaç dioptri gerekir?', 'D = 100 / mesafe (cm)', 'Çalışma mesafesinin dioptri karşılığıdır.', '40 cm için 100 / 40 = 2,50 D; 67 cm için yaklaşık 1,50 D'],
+    ['tra', 'rec', 'Transpozisyon', 'Eksi silindirli bir reçete artı silindire nasıl çevrilir?', 'Yeni küre = S + C · Yeni silindir = −C · Yeni aks = aks ± 90', 'Üç adım: topla, işaret değiştir, aksı 90° çevir (180’i aşmayacak biçimde).', '+1,00 −2,00 × 90  →  −1,00 +2,00 × 180'],
+    ['sfe', 'rec', 'Sferik eşdeğer', 'Astigmatlı bir reçetenin tek sayıyla ortalama gücü nedir?', 'SE = S + C / 2', 'Silindirin yarısı, işaretiyle birlikte küreye eklenir.', '−2,00 −1,00 × 180 için SE = −2,00 + (−0,50) = −2,50 D'],
+    ['ver', 'rec', 'Vertex (etkin güç)', 'Cam göze yaklaşınca ya da uzaklaşınca gücü ne olur?', 'Fe = F / (1 − d · F)', 'd, camın göze doğru kaydırıldığı mesafedir (metre). ±4,00 D üzerinde önem kazanır.', '−10,00 D gözlük camı, 12 mm vertexte: −10 / (1 + 0,12) ≈ −8,93 D'],
+    ['add', 'rec', 'Yakın reçetesi', 'Uzak reçetesi ve adisyondan yakın gözlüğü nasıl bulunur?', 'Yakın küre = Uzak küre + ADD', 'Adisyon yalnızca küreye eklenir; silindir ve aks değişmez.', 'Uzak −1,50 −0,50 × 90, ADD +2,00  →  yakın +0,50 −0,50 × 90'],
+    ['ara', 'rec', 'Ara mesafe gücü', 'Bilgisayar mesafesi için yaklaşık güç nasıl bulunur?', 'Ara küre ≈ Uzak küre + ADD / 2', 'Yaklaşık bir kuraldır; çalışma mesafesine göre değişir.', 'Uzak +1,00, ADD +2,00  →  ara ≈ +2,00'],
+    ['obl', 'rec', 'Eğik meridyende silindir gücü', 'Silindirin, aksından θ kadar uzaktaki meridyendeki gücü nedir?', 'Fθ = C · sin² θ', 'θ, aks ile bakılan meridyen arasındaki açıdır. Aks üzerinde güç sıfır, 90° ötesinde tamdır.', '−2,00 silindirin aksından 30° uzakta: −2,00 × 0,25 = −0,50 D'],
+    ['ako', 'rec', 'En az akomodasyon (Hofstetter)', 'Yaşa göre beklenen en az akomodasyon genliği nedir?', 'A = 15 − 0,25 × yaş', 'Dioptri cinsinden yaklaşık alt sınırı verir.', '40 yaşında: 15 − 10 = 5,00 D'],
+    ['pre', 'cam', 'Prentice kuralı', 'Optik merkezden kayınca ne kadar prizma oluşur?', 'Δ = c × F', 'c santimetre cinsinden kayma, F camın o meridyendeki gücüdür.', '5 mm kayma, −4,00 D cam: 0,5 × 4 = 2 Δ'],
+    ['sag', 'cam', 'Sagitta (yüzey derinliği)', 'Bir cam yüzeyinin çukurluğu yaklaşık ne kadardır?', 's ≈ y² · F / (2000 · (n − 1))', 'y yarı çap (mm), F yüzey gücü (D), s milimetredir.', 'y = 30 mm, F = 4,00 D, n = 1,50: 900 × 4 / 1000 = 3,6 mm'],
+    ['ken', 'cam', 'Eksi camda kenar kalınlığı', 'Eksi bir camın kenarı yaklaşık ne kadar kalın olur?', 'Kenar ≈ Merkez + y² · |F| / (2000 · (n − 1))', 'Merkez kalınlığına sagitta eklenir. Çap büyüdükçe ve indeks düştükçe kenar kalınlaşır.', '−4,00 D, n = 1,50, 60 mm çap, merkez 2 mm: 2 + 3,6 = 5,6 mm'],
+    ['tca', 'cam', 'Renk saçılması', 'Bir camda kenardan bakınca oluşan renklenme neye bağlıdır?', 'Renk saçılması = Δ / Abbe', 'Bakılan noktadaki prizmatik etki, malzemenin Abbe sayısına bölünür. Abbe düştükçe renklenme artar.', '3 Δ prizmatik etki, Abbe 30: 3 / 30 = 0,10 Δ'],
+    ['buy', 'cam', 'Büyütecin büyütmesi', 'Bir büyütecin büyütme gücü dioptriden nasıl bulunur?', 'M = F / 4', 'Yaygın kullanılan yaklaşık kuraldır; 25 cm’lik rahat görme mesafesine dayanır.', '+8,00 D büyüteç yaklaşık 2× büyütür'],
+    ['cpd', 'mon', 'Çerçeve PD’si', 'Çerçevenin geometrik merkezleri arasındaki mesafe nedir?', 'Çerçeve PD = A + DBL', 'A cam genişliği, DBL köprü mesafesidir (kutu sistemi).', '52 □ 18 çerçevede 52 + 18 = 70 mm'],
+    ['des', 'mon', 'Yatay desantrasyon', 'Optik merkez, cam merkezinden ne kadar kaydırılır?', 'Desantrasyon = (A + DBL) / 2 − tek göz PD', 'Sonuç artıysa içe (buruna doğru), eksiyse dışa kaydırılır.', '52 □ 18, tek göz PD 32: 35 − 32 = 3 mm içe'],
+    ['ham', 'mon', 'En küçük ham cam çapı', 'Bu çerçeve için en az kaç milimetrelik ham cam gerekir?', 'Çap = ED + 2 × desantrasyon + 2', 'ED çerçevenin en uzun köşegeni, son 2 mm işleme payıdır.', 'ED 54 mm, desantrasyon 3 mm: 54 + 6 + 2 = 62 mm'],
+    ['pan', 'mon', 'Pantoskopik eğim ve optik merkez', 'Çerçeve öne eğikse optik merkez ne kadar aşağı alınır?', 'Her 2° eğim için 1 mm aşağı', 'Optik eksenin gözün dönme merkezinden geçmesi için uygulanan yaklaşık kuraldır.', '10° pantoskopik eğimde optik merkez 5 mm aşağıda olmalıdır']
+  ];
+  var cat = 'hep', known = {}, deck = [], idx = 0, flip = false, view = 'kart', only = false;
+  try { known = JSON.parse(localStorage.getItem('cgFormul') || '{}'); } catch (e) { }
+  function save() { try { localStorage.setItem('cgFormul', JSON.stringify(known)); } catch (e) { } }
+  function pool() { return F.filter(function (f) { return (cat === 'hep' || f[1] === cat) && (!only || !known[f[0]]); }); }
+  function build(sh) { deck = pool(); if (sh) for (var i = deck.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = deck[i]; deck[i] = deck[j]; deck[j] = t; } idx = 0; flip = false; }
+  function render() {
+    var all = F.filter(function (f) { return cat === 'hep' || f[1] === cat; }), kn = all.filter(function (f) { return known[f[0]]; }).length, c = deck[idx];
+    var h = '<p class="cgt-lead">Optisyenlikte en çok kullanılan ' + F.length + ' formül, çevrilebilir kartlarda. Önce cevabı düşünün, sonra kartı çevirin; bildiklerinizi işaretleyin, bilmediklerinizle yeniden çalışın.</p>' +
+      '<style>.fk-c{perspective:1400px;cursor:pointer;outline:0}.fk-i{position:relative;min-height:330px;transition:transform .5s;transform-style:preserve-3d}.fk-c.on .fk-i{transform:rotateY(180deg)}.fk-f{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:20px;padding:26px 24px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:12px}.fk-a{background:linear-gradient(135deg,#004aad,#2f86ff);color:#fff;box-shadow:0 12px 28px rgba(0,74,173,.25)}.fk-b{background:#fff;border:2px solid #004aad;transform:rotateY(180deg);box-shadow:0 12px 28px rgba(20,35,59,.12)}.fk-x{font-size:clamp(20px,3.6vw,30px);font-weight:800;color:#004aad;line-height:1.3;font-variant-numeric:tabular-nums}.fk-c:focus-visible .fk-f{outline:3px solid #ffb020;outline-offset:3px}@media(prefers-reduced-motion:reduce){.fk-i{transition:none}}@media print{.fk-np{display:none!important}}</style>' +
+      '<div class="cgt-panel fk-np" style="margin-bottom:12px"><div class="cgt-chips">' + Object.keys(K).map(function (k) { return '<button type="button" class="cgt-chip' + (cat === k ? ' on' : '') + '" data-c="' + k + '">' + K[k] + '</button>'; }).join('') + '</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between"><div class="cgt-chips"><button type="button" class="cgt-chip' + (view === 'kart' ? ' on' : '') + '" data-v="kart">Kartlar</button><button type="button" class="cgt-chip' + (view === 'liste' ? ' on' : '') + '" data-v="liste">Liste</button></div>' +
+      '<div style="flex:1 1 180px;min-width:0"><div class="cgt-row" style="margin-bottom:5px"><span>Bildikleriniz</span><b>' + kn + ' / ' + all.length + '</b></div><div style="height:8px;border-radius:4px;background:#e3ebf7;overflow:hidden"><div style="height:100%;width:' + (all.length ? kn / all.length * 100 : 0) + '%;background:#0a7a3d"></div></div></div></div></div>';
+    if (view === 'liste') {
+      h += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:12px">' + all.map(function (f) { return '<div class="cgt-panel" style="gap:6px;break-inside:avoid;border-left:5px solid ' + (known[f[0]] ? '#0a7a3d' : '#c9dcff') + '"><span class="cgt-h" style="margin:0">' + K[f[1]] + '</span><b style="font-size:17px">' + f[2] + '</b><div style="font-size:18px;font-weight:800;color:#004aad">' + f[4] + '</div><div style="font-size:14px;color:#243247">' + f[5] + '</div><div style="font-size:13.5px;color:#5b6b82"><b>Örnek:</b> ' + f[6] + '</div></div>'; }).join('') + '</div><div class="cgt-chips fk-np" style="margin-top:12px"><button type="button" class="cgt-btn" data-a="print">Yazdır</button></div>';
+    } else if (!c) {
+      h += '<div class="cgt-panel" style="align-items:center;text-align:center;padding:34px 20px"><b style="font-size:22px;color:#0a7a3d">' + (only ? 'Bu bölümde bilmediğiniz kart kalmadı.' : 'Bu turu bitirdiniz.') + '</b><div>' + kn + ' / ' + all.length + ' kartı biliyorsunuz.</div><div class="cgt-chips" style="justify-content:center">' + (kn < all.length ? '<button type="button" class="cgt-btn y" data-a="rest">Bilmediklerimle devam et (' + (all.length - kn) + ')</button>' : '') + '<button type="button" class="cgt-btn" data-a="all">Hepsini baştan çalış</button>' + (kn ? '<button type="button" class="cgt-btn" data-a="zero">İlerlemeyi sıfırla</button>' : '') + '</div></div>';
+    } else {
+      h += '<div class="fk-c' + (flip ? ' on' : '') + '" id="fkC" tabindex="0" role="button" aria-label="Kartı çevir"><div class="fk-i"><div class="fk-f fk-a"><span style="font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.85">' + K[c[1]] + ' · ' + (idx + 1) + ' / ' + deck.length + '</span><b style="font-size:clamp(22px,4vw,32px);line-height:1.2">' + c[2] + '</b><span style="font-size:17px;max-width:520px;color:#e3ecff">' + c[3] + '</span><span style="font-size:13px;font-weight:700;background:rgba(255,255,255,.18);border-radius:999px;padding:6px 14px;margin-top:6px">Çevirmek için dokunun</span></div>' +
+        '<div class="fk-f fk-b"><span class="cgt-h" style="margin:0">' + c[2] + '</span><div class="fk-x">' + c[4] + '</div><div style="font-size:15px;max-width:560px;color:#243247">' + c[5] + '</div><div style="font-size:14.5px;background:#f3f7fd;border-radius:10px;padding:9px 14px;max-width:560px"><b style="color:#004aad">Örnek:</b> ' + c[6] + '</div></div></div></div>' +
+        '<div class="cgt-chips" style="justify-content:center;margin-top:14px">' + (flip ? '<button type="button" class="cgt-btn" data-a="no" style="padding:12px 20px;font-size:15px;border-color:#b3261e;color:#b3261e">Bilemedim</button><button type="button" class="cgt-btn" data-a="yes" style="padding:12px 20px;font-size:15px;background:#0a7a3d;border-color:#0a7a3d;color:#fff">Bildim</button>' : '<button type="button" class="cgt-btn b" data-a="flip" style="padding:12px 22px;font-size:15px">Kartı çevir</button>') + '</div>' +
+        '<div class="cgt-chips" style="justify-content:center;margin-top:10px"><button type="button" class="cgt-btn" data-a="prev"' + (idx ? '' : ' disabled') + '>← Önceki</button><button type="button" class="cgt-btn" data-a="mix">Karıştır</button><button type="button" class="cgt-btn" data-a="skip">Sonraki →</button></div>';
+    }
+    root.innerHTML = h + '<p class="cgt-note fk-np">Formüller ince mercek yaklaşımıyla ve eğitim amacıyla verilmiştir. Değerleri kendiniz girip sonucu görmek için <a href="/p/formuller.html">Hesaplama Araçları</a>, alıştırma için <a href="/p/recete-yazma-alistirmasi.html">Reçete Yazma Alıştırması</a>. İlerlemeniz yalnızca bu cihazda saklanır.</p>';
+  }
+  function act(a) {
+    var c = deck[idx];
+    if (a === 'flip') flip = !flip;
+    else if (a === 'yes' || a === 'no') { if (a === 'yes') known[c[0]] = 1; else delete known[c[0]]; save(); idx++; flip = false; }
+    else if (a === 'skip') { idx++; flip = false; } else if (a === 'prev') { idx = Math.max(0, idx - 1); flip = false; }
+    else if (a === 'mix') build(true); else if (a === 'rest') { only = true; build(true); } else if (a === 'all') { only = false; build(true); }
+    else if (a === 'zero') { known = {}; save(); only = false; build(false); } else if (a === 'print') return window.print();
+    render();
+  }
+  root.addEventListener('click', function (e) {
+    var b = e.target.closest('button');
+    if (b) { if (b.hasAttribute('data-c')) { cat = b.getAttribute('data-c'); only = false; build(false); render(); } else if (b.hasAttribute('data-v')) { view = b.getAttribute('data-v'); render(); } else if (b.hasAttribute('data-a')) act(b.getAttribute('data-a')); return; }
+    if (e.target.closest('#fkC')) act('flip');
+  });
+  root.addEventListener('keydown', function (e) { if (view !== 'kart' || !deck[idx] || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; if (e.key === ' ' || e.key === 'Enter') { if (e.target.id === 'fkC') { e.preventDefault(); act('flip'); } } else if (e.key === 'ArrowRight') act('skip'); else if (e.key === 'ArrowLeft') act('prev'); });
+  build(false); render();
+})();
