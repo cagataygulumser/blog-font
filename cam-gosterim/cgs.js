@@ -193,7 +193,7 @@ function show3(on,on2){$('cgs3d').style.display=on?'block':'none';$('cgs3e').sty
 var E3={on:false,load:0};
 function e3map(d){var f=bfn(d,false,true),rm=d.t==='pr'||d.t==='of';return function(u,v){if(rm)v=v>=.21?.5+(v-.21)/.79*.5:-1+(v+1)/1.21*1.5;return f(u,v,0,0)}}
 function e3zone(d,u,v,b){var r=Math.sqrt(u*u+v*v),vv=v>=.21?.5+(v-.21)/.79*.5:-1+(v+1)/1.21*1.5;
-if(d.t==='pr')return b>.15?['yan bölge','Koridorun dışı: görüntü bulanıklaşır, başı o yöne çevirmek gerekir.']:vv>=.5?['uzak bölgesi','Araç kullanma ve yürüme mesafesi.']:vv>=-.5?['ara mesafe koridoru','Ekran ve tezgâh mesafesi; koridor dardır.']:['yakın bölgesi','Okuma ve telefon mesafesi.'];
+if(d.t==='pr')return b>.15?['yan bölge','Koridorun dışı: görüntü bulanıklaşır, başı o yöne çevirmek gerekir.']:vv>=.5?['uzak bölgesi','Araç kullanma ve yürüme mesafesi.']:vv>=-.5?['ara mesafe koridoru','Ekran ve masa mesafesi; koridor dardır.']:['yakın bölgesi','Okuma ve telefon mesafesi.'];
 if(d.t==='of')return b>.2?['yan bölge','Kenarlarda netlik azalır.']:vv>=.3?['oda içi bölgesi','Birkaç metreye kadar net.']:vv>=-.5?['ekran bölgesi','Ekran mesafesinde geniş net alan.']:['okuma bölgesi','Yakın mesafe.'];
 if(d.t==='sv')return b>.25?['kenar bölgesi','Tasarım basitleştikçe ve numara yükseldikçe kenarda netlik azalır.']:['merkez bölgesi','Optik merkezin çevresi: en net alan.'];
 if(d.t==='dn')return b>.1?['alt yan bölge','Yakın desteğinin kenarı.']:v<-.3?['yakın destek bölgesi','Alt bölümde hafif yakın desteği.']:['uzak bölgesi','Tek odak gibi davranır.'];
