@@ -1,0 +1,1 @@
+head.glb: "Infinite, 3D Head Scan" by Lee Perry-Smith is licensed under a Creative Commons Attribution 3.0 Unported License. Based on a work at www.triplegangers.com (Infinite-Realities, http://www.ir-ltd.net/). Converted to glTF by the three.js project. Used here unmodified as a mannequin head.
