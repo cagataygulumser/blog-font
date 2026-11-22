@@ -76,14 +76,18 @@
       var dot = new THREE.Mesh(new THREE.SphereGeometry(1.1, 12, 10), new THREE.MeshBasicMaterial({ color: 0xffd400, toneMapped: false })); dot.position.set(lp[0], lp[1], lp[2]); g.add(dot); L.stats.plus = plus;
       stats[key] = L.stats; G.add(g);
     });
+    var dz = 0, RC = null;
+    function faceZ(x, y) { if (!RC) return null; RC.set(V(x, y, 260), V(0, 0, -1)); var h = RC.intersectObject(st.head, true); return h.length ? h[0].point.z : null; }
+    if (st.head && st.headOn) { RC = new THREE.Raycaster(); st.head.updateMatrixWorld(true); ['r', 'l'].forEach(function (k) { for (var i = 0; i < rims[k].length; i += 3) { var q = rims[k][i], z = faceZ(q.x, q.y); if (z != null) { var need = z - (q.z - rr) + 0.6; if (need > dz) dz = need; } } }); dz = Math.min(dz, 16); }
+    G.position.z = dz;
     function pick(arr, fn) { var b = null, bv = -1e9; arr.forEach(function (v) { var s = fn(v); if (s > bv) { bv = s; b = v; } }); return b; }
     var nr = pick(rims.r, function (v) { return v.x * 1 + v.y * 0.55; }), nl = pick(rims.l, function (v) { return -v.x * 1 + v.y * 0.55; });
     G.add(tube([nr, V(nr.x * 0.5, nr.y + 1.6, nr.z + 1.2), V(0, nr.y + 2.2, nr.z + 1.6), V(nl.x * 0.5, nl.y + 1.6, nl.z + 1.2), nl], acet ? 2.1 : 0.9, false, fm, 40));
     if (!acet) { [-1, 1].forEach(function (s) { var pr = pick(s < 0 ? rims.r : rims.l, function (v) { return -s * v.x * 1 - v.y * 0.7; });
-      G.add(tube([pr, V(pr.x - s * 1.5, pr.y - 2, pr.z - 4), V(s * 8.5, pr.y - 4.5, pr.z - 7)], 0.45, false, fm, 16));
-      var pad = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf2f4f7, transparent: true, opacity: 0.8, roughness: 0.2 })); pad.scale.set(0.45, 1, 0.75); pad.position.set(s * 8.2, pr.y - 5, pr.z - 7.6); pad.rotation.z = s * 0.35; G.add(pad); }); }
+      var pz = faceZ(s * 8.4, pr.y - 5), padZ = pz != null ? Math.min(pr.z - 2, pz - dz + 1.2) : pr.z - 7.6; var pad = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf2f4f7, transparent: true, opacity: 0.8, roughness: 0.2 })); pad.scale.set(0.45, 1, 0.75); pad.position.set(s * 8.4, pr.y - 5, padZ); pad.rotation.z = s * 0.35; G.add(pad);
+      G.add(tube([pr, V(pr.x - s * 1.2, pr.y - 2.5, (pr.z + padZ) / 2), V(s * 8.4, pr.y - 4.5, padZ + 0.6)], 0.45, false, fm, 16)); }); }
     [-1, 1].forEach(function (s) { var tp = pick(s < 0 ? rims.r : rims.l, function (v) { return s * v.x * 1 + v.y * 0.45; }), tr = acet ? 1.9 : 0.85, ex = s * Math.max(Math.abs(tp.x) + 6, 70);
-      G.add(tube([tp, V(tp.x + s * 3.2, tp.y + 0.4, tp.z - 1.5), V(tp.x + s * 4.5, tp.y, tp.z - 9), V(ex + s * 1.5, tp.y * 0.55 + EAR[1] * 0.45, -52), V(s * EAR[0], EAR[1], EAR[2]), V(s * (EAR[0] - 1), EAR[1] - 5, EAR[2] - 13), V(s * (EAR[0] - 3), EAR[1] - 19, EAR[2] - 21), V(s * (EAR[0] - 5), EAR[1] - 34, EAR[2] - 22)], tr, false, fm, 90)); });
+      G.add(tube([tp, V(tp.x + s * 3.2, tp.y + 0.4, tp.z - 1.5), V(tp.x + s * 4.5, tp.y, tp.z - 9), V(ex + s * 1.5, tp.y * 0.55 + EAR[1] * 0.45, -52), V(s * EAR[0], EAR[1], EAR[2] - dz), V(s * (EAR[0] - 1), EAR[1] - 5, EAR[2] - 13 - dz), V(s * (EAR[0] - 3), EAR[1] - 19, EAR[2] - 21 - dz), V(s * (EAR[0] - 5), EAR[1] - 34, EAR[2] - 22 - dz)], tr, false, fm, 90)); });
     st.sc.add(G); st.stats = stats; fitShadow();
   }
   function fitShadow() { if (!st.shadow) return; st.shadow.position.y = st.headOn && st.head ? -78 - 3.9 * HEAD_S + 2 : -34; var k = st.headOn && st.head ? 1 : 0.42; st.shadow.scale.set(k, k, k); }
@@ -110,7 +114,7 @@
     st.ctl = new THREE.OrbitControls(st.cam, r.domElement); st.ctl.enableDamping = true; st.ctl.dampingFactor = 0.08; st.ctl.enablePan = false; st.ctl.minDistance = 120; st.ctl.maxDistance = 900; st.ctl.autoRotateSpeed = 1.4; st.ctl.addEventListener('start', function () { st.anim = null; });
     var c = document.createElement('canvas'); c.width = c.height = 256; var g = c.getContext('2d'), gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, 'rgba(20,40,80,.3)'); gr.addColorStop(1, 'rgba(20,40,80,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
     st.shadow = new THREE.Mesh(new THREE.PlaneGeometry(520, 520), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); st.shadow.rotation.x = -Math.PI / 2; sc.add(st.shadow);
-    new THREE.GLTFLoader().load(base + 'head.glb', function (gl) { var h = gl.scene; h.traverse(function (o) { if (o.isMesh) o.material = new THREE.MeshStandardMaterial({ color: LC(0xd9b9a6), roughness: 0.82, metalness: 0, envMapIntensity: 0.55 }); }); h.scale.set(HEAD_S, HEAD_S, HEAD_S); h.position.set(HEAD_OFF[0], HEAD_OFF[1], HEAD_OFF[2]); h.visible = st.headOn; st.head = h; sc.add(h); fitShadow(); view(st.viewName || 'capraz', true); if (st.onHead) st.onHead(); }, undefined, function () { st.headFail = true; if (st.onHead) st.onHead(); });
+    new THREE.GLTFLoader().load(base + 'head.glb', function (gl) { var h = gl.scene; h.traverse(function (o) { if (o.isMesh) o.material = new THREE.MeshStandardMaterial({ color: LC(0xd9b9a6), roughness: 0.82, metalness: 0, envMapIntensity: 0.55 }); }); h.scale.set(HEAD_S, HEAD_S, HEAD_S); h.position.set(HEAD_OFF[0], HEAD_OFF[1], HEAD_OFF[2]); h.visible = st.headOn; st.head = h; sc.add(h); fitShadow(); rebuild(); view(st.viewName || 'capraz', true); if (st.onHead) st.onHead(); }, undefined, function () { st.headFail = true; if (st.onHead) st.onHead(); });
     window.addEventListener('resize', resize); st.ready = true; resize(); rebuild(); view(st.viewName || 'capraz', true);
   }
   window.CGS3D = {
