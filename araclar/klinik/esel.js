@@ -9,18 +9,27 @@
     '<div class="cgt-main"><div class="cgt-panel" id="esP"></div><div class="cgt-col">' + K.stage('es', 'min(64vh,520px)', '#fff') + '<div class="cgt-info" id="esI"></div></div></div>' +
     '<p class="cgt-note">Optotip yüksekliği, seçilen mesafede 1,0 görme keskinliği için 5 açı dakikası olacak biçimde hesaplanır; doğruluk ekran kalibrasyonuna ve mesafenin doğru girilmesine bağlıdır. E ve Landolt C standart 5×5 ızgarayla çizilir; harf ve rakamlar ekran yazı tipiyle gösterildiği için çizgi kalınlığı standart optotipten biraz farklıdır. Ekran parlaklığı ve kontrastı standardize değildir.</p>' + K.dr;
   function boy() { return S.mes * 1000 * Math.tan(5 / 60 / L[S.i][0] * Math.PI / 180) * K.pxmm(); }
-  function karistir() { var n = Math.max(1, N), a = [], p = -1, v, m = S.tip === 'E' || S.tip === 'C' ? 4 : SET[S.tip].length; while (a.length < n) { v = Math.floor(Math.random() * m); if (v !== p || m < 2) { a.push(v); p = v; } } SEQ = a; }
+  function karistir() { var n = Math.max(1, N), a = [], p = -1, v, m = S.tip === 'E' || S.tip === 'C' ? 4 : S.tip === 'sekil' ? 5 : SET[S.tip].length; while (a.length < n) { v = Math.floor(Math.random() * m); if (v !== p || m < 2) { a.push(v); p = v; } } SEQ = a; }
   function panel() {
-    K.$('esP').innerHTML = '<div><p class="cgt-h">Optotip</p>' + K.chips('t', [['E', 'E'], ['C', 'Landolt C'], ['harf', 'Harf'], ['rakam', 'Rakam']], S.tip) + '</div>' + K.range('mes', 'Test mesafesi', S.mes, .4, 6, .1, ' m', K.tr(S.mes)) +
+    K.$('esP').innerHTML = '<div><p class="cgt-h">Optotip</p>' + K.chips('t', [['E', 'E'], ['C', 'Landolt C'], ['harf', 'Harf'], ['rakam', 'Rakam'], ['sekil', 'Şekil (çocuk)']], S.tip) + '</div>' + K.range('mes', 'Test mesafesi', S.mes, .4, 6, .1, ' m', K.tr(S.mes)) +
       '<div><p class="cgt-h">Satır</p><div class="cgt-chips"><button type="button" class="cgt-btn" data-a="buyut">Büyüt</button><button type="button" class="cgt-btn" data-a="kucult">Küçült</button><button type="button" class="cgt-btn y" data-a="kar">Karıştır</button></div><div style="font-size:12.5px;color:#5b6b82;margin-top:6px">Klavye: ↑ ↓ satır, boşluk karıştır.</div></div>' +
       '<div><p class="cgt-h">Zemin</p>' + K.chips('z', [['b', 'Beyaz'], ['d', 'Duokrom']], S.zemin) + '</div><label class="cgt-tog"><input type="checkbox" id="esAy"' + (S.ayna ? ' checked' : '') + '> Ayna için ters çevir</label><div id="esK"></div>';
     K.calib(K.$('esK'), function () { N = 0; redraw(); info(); });
   }
-  function info() { var l = L[S.i], H = boy(); K.$('esI').innerHTML = '<b>Satır:</b> ondalık <b>' + String(l[0]).replace('.', ',') + '</b> · Snellen <b>' + l[1] + '</b> (' + l[2] + ') · logMAR <b>' + K.tr(-Math.log(l[0]) / Math.LN10, 1).replace('-', '−') + '</b> · optotip yüksekliği ' + K.tr(H / K.pxmm(), 1) + ' mm.' + (WARN ? ' <b style="color:#b3261e">' + WARN + '</b>' : '') + (S.zemin === 'd' ? ' Duokromda harfler kırmızı zeminde daha net ise eksi yönde, yeşilde daha net ise artı yönde düzeltme düşünülür.' : ''); }
+  function info() { var l = L[S.i], H = boy(); K.$('esI').innerHTML = '<b>Satır:</b> ondalık <b>' + String(l[0]).replace('.', ',') + '</b> · Snellen <b>' + l[1] + '</b> (' + l[2] + ') · logMAR <b>' + K.tr(-Math.log(l[0]) / Math.LN10, 1).replace('-', '−') + '</b> · optotip yüksekliği ' + K.tr(H / K.pxmm(), 1) + ' mm.' + (WARN ? ' <b style="color:#b3261e">' + WARN + '</b>' : '') + (S.tip === 'sekil' ? ' Şekiller (daire, kare, üçgen, ev, artı) okuma bilmeyen çocuklar için bu sayfaya özgü çizilmiştir; çizgi kalınlığı standart optotiple aynıdır ama geçerlilik çalışması yapılmamıştır, sonucu E ya da Landolt C ile doğrulayın.' : '') + (S.zemin === 'd' ? ' Duokromda harfler kırmızı zeminde daha net ise eksi yönde, yeşilde daha net ise artı yönde düzeltme düşünülür.' : ''); }
   function opt(g, H, v) {
     var u = H / 5, i;
     if (S.tip === 'E') { g.rotate(v * Math.PI / 2); g.fillRect(-H / 2, -H / 2, u, H); for (i = 0; i < 3; i++) g.fillRect(-H / 2, -H / 2 + i * 2 * u, H, u); }
     else if (S.tip === 'C') { g.rotate(v * Math.PI / 2); var a = Math.asin(.5 / 2.5); g.beginPath(); g.arc(0, 0, H / 2, a, 2 * Math.PI - a); g.arc(0, 0, H / 2 - u, 2 * Math.PI - Math.asin(.5 / 1.5), Math.asin(.5 / 1.5), true); g.closePath(); g.fill(); }
+    else if (S.tip === 'sekil') {
+      var r = H / 2 - u / 2, k; g.lineWidth = u; g.lineJoin = 'miter'; g.strokeStyle = '#000'; g.beginPath();
+      if (v === 0) g.arc(0, 0, r, 0, 7);
+      else if (v === 1) g.rect(-r, -r, 2 * r, 2 * r);
+      else if (v === 2) { g.moveTo(0, -r); g.lineTo(r, r); g.lineTo(-r, r); g.closePath(); }
+      else if (v === 3) { g.moveTo(-r, r); g.lineTo(-r, -r * .1); g.lineTo(0, -r); g.lineTo(r, -r * .1); g.lineTo(r, r); g.closePath(); }
+      else { g.rect(-u / 2, -H / 2, u, H); g.rect(-H / 2, -u / 2, H, u); g.fillStyle = '#000'; g.fill(); g.beginPath(); }
+      g.stroke();
+    }
     else { var ch = SET[S.tip].charAt(v), f = 200; g.font = '700 ' + f + 'px Arial, Helvetica, sans-serif'; var m = g.measureText('H'), cap = (m.actualBoundingBoxAscent || f * .716) / f; f = H / cap; g.font = '700 ' + f + 'px Arial, Helvetica, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'alphabetic'; g.fillText(ch, 0, H / 2); }
   }
   function draw(g, w, h) {
